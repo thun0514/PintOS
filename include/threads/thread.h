@@ -91,7 +91,7 @@ typedef struct thread {
     enum thread_status status; /* Thread state. */
     char name[16];             /* Name (for debugging purposes). */
     int priority;              /* Priority. */
-    int64_t wakeup_ticks;      /** #Alarm Clock 활성화 틱 */
+    int64_t wakeup_tick;      /** #Alarm Clock 활성화 틱 */
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem; /* List element. */
