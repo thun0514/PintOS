@@ -85,7 +85,9 @@ void timer_sleep(int64_t ticks) {
     int64_t start = timer_ticks();
 
     ASSERT(intr_get_level() == INTR_ON);
-    thread_sleep(start + ticks); // start + ticks 시간동안 쓰레드 sleep
+
+    /** #Alarm Clock start + ticks 동안 쓰레드 sleep  */
+    thread_sleep(start + ticks);
 
     // while (timer_elapsed(start) < ticks) {
     //     thread_yield();  // 쓰레드 인계
@@ -116,7 +118,7 @@ void timer_print_stats(void) {
 static void timer_interrupt(struct intr_frame *args UNUSED) {
     ticks++;
     thread_tick();
-	thread_awake(ticks);
+    thread_awake(ticks);
 }
 
 /* loop가 1개 초과시 true 반환 */
