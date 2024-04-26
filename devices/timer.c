@@ -118,7 +118,10 @@ void timer_print_stats(void) {
 static void timer_interrupt(struct intr_frame *args UNUSED) {
     ticks++;
     thread_tick();
-    thread_awake(ticks);
+
+    /** #Alarm Clock 현재 활성화되어야 하는 thread가 있는지 탐색하여 활성화 */
+    if (get_next_tick_to_awake() <= ticks)
+        thread_awake(ticks);
 }
 
 /* loop가 1개 초과시 true 반환 */
