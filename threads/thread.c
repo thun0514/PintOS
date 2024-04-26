@@ -610,3 +610,8 @@ void thread_awake(int64_t wakeup_tick) {
 void update_next_tick_to_awake(int64_t ticks) {
     next_tick_to_awake = (next_tick_to_awake > ticks) ? ticks : next_tick_to_awake;
 }
+
+/** #Alarm Clock 현재 next_tick_to_awake 값 리턴 함수 */
+int64_t get_next_tick_to_awake(void) {
+    return next_tick_to_awake;   
+}
