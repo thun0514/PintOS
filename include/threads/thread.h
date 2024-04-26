@@ -108,7 +108,7 @@ typedef struct thread {
     /* Owned by thread.c. */
     struct intr_frame tf; /* Information for switching */
     unsigned magic;       /* Detects stack overflow. */
-}thread;
+}thread_t;
 
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
