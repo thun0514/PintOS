@@ -26,6 +26,10 @@
    Do not modify this value. */
 #define THREAD_BASIC 0xd42df210
 
+/** #Alarm Clock 전역 변수 */
+static struct list sleep_list;
+static int64_t next_tick_to_awake;
+
 /* List of processes in THREAD_READY state, that is, processes
    that are ready to run but not actually running. */
 static struct list ready_list;

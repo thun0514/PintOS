@@ -31,14 +31,14 @@ static bool too_many_loops(unsigned loops);
 static void busy_wait(int64_t loops);
 static void real_time_sleep(int64_t num, int32_t denom);
 
-/* 초당 count 회 인터럽트하도록 8254 Programmable Interval Timer (PIT) 설정 및 인터럽트 등록 */
+/* 초당 100 회 인터럽트하도록 8254 Programmable Interval Timer (PIT) 설정 및 인터럽트 등록 */
 void timer_init(void) {
-    /* 8254 입력 주파수를 TIMER_FREQ로 나눠서 가장 가까운 값으로 반올림 */
-    uint16_t count = (1193180 + TIMER_FREQ / 2) / TIMER_FREQ;
-
-    outb(0x43, 0x34);          /* CW: counter 0(00), LSB then MSB(11), mode 2(010), binary(0). */
-    outb(0x40, count & 0xff);  // 하위 8 Bit 체크
-    outb(0x40, count >> 8);    // 상위 8 Bit 체크
+    /* 8254 입력 주파수를 TIMER_FREQ로 나눠서 가장 가까운 값으로 반올림
+       PC가 1초에 1193180 Hz의 클럭 신호를 발생시키기 때문에 1초에 100번 인터럽트를 발생시키게 하기 위한 값 */
+    uint16_t count = (1193180 + TIMER_FREQ / 2) / TIMER_FREQ;  //
+    outb(0x43, 0x34);                                          /* CW: counter 0(00), LSB then MSB(11), mode 2(010), binary(0). */
+    outb(0x40, count & 0xff);                                  // 하위 8 Bit 체크
+    outb(0x40, count >> 8);                                    // 상위 8 Bit 체크
 
     intr_register_ext(0x20, timer_interrupt, "8254 Timer");  // 외부 인터럽트 핸들러를 호출하기 위한 VEC Number 등록
 }
@@ -75,7 +75,7 @@ int64_t timer_ticks(void) {
     return t;
 }
 
-/* 그 후 경과된 타이머 틱 수 반환 (should returned by timer_ticks()) */
+/* then 이후 경과된 타이머 틱 수 반환 (should returned by timer_ticks()) */
 int64_t timer_elapsed(int64_t then) {
     return timer_ticks() - then;
 }
@@ -85,8 +85,11 @@ void timer_sleep(int64_t ticks) {
     int64_t start = timer_ticks();
 
     ASSERT(intr_get_level() == INTR_ON);
-    while (timer_elapsed(start) < ticks)
-        thread_yield(); // 쓰레드 인계
+    thread_sleep(start + ticks); // start + ticks 시간동안 쓰레드 sleep
+
+    // while (timer_elapsed(start) < ticks) {
+    //     thread_yield();  // 쓰레드 인계
+    // }
 }
 
 /* 대략 MS miliseconds동안 일시정지 */
@@ -113,9 +116,10 @@ void timer_print_stats(void) {
 static void timer_interrupt(struct intr_frame *args UNUSED) {
     ticks++;
     thread_tick();
+	thread_awake(ticks);
 }
 
-/* ㅣoop가 1개 초과시 true 반환 */
+/* loop가 1개 초과시 true 반환 */
 static bool too_many_loops(unsigned loops) {
     /* Wait for a timer tick. */
     int64_t start = ticks;
