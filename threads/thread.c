@@ -605,3 +605,8 @@ void thread_awake(int64_t wakeup_tick) {
         }
     }
 }
+
+/** #Alarm Clock 다음 활성화 tick 갱신 함수 */
+void update_next_tick_to_awake(int64_t ticks) {
+    next_tick_to_awake = (next_tick_to_awake > ticks) ? ticks : next_tick_to_awake;
+}
