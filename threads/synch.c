@@ -309,3 +309,20 @@ void cond_broadcast(struct condition *cond, struct lock *lock) {
     while (!list_empty(&cond->waiters))
         cond_signal(cond, lock);
 }
+
+/** #Priority Scheduling - Synchronization 첫 번째 인자의 우선순위가 두 번째 인자의 우선순위보다 높으면 1, 아니면 0을 반환 */
+bool cmp_sem_priority(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED){
+    struct semaphore_elem *sema_a = list_entry(a, struct semaphore_elem, elem);
+    struct semaphore_elem *sema_b = list_entry(b, struct semaphore_elem, elem);
+    
+    thread_t *thread_a = list_entry(sema_a->semaphore.waiters.head.next, thread_t, elem);
+    thread_t *thread_b = list_entry(sema_b->semaphore.waiters.head.next, thread_t, elem);
+
+    if (thread_a == NULL || sema_b == NULL)
+        return false;
+
+    if (thread_a->priority > thread_b->priority)
+        return true;
+    
+    return false;
+}
