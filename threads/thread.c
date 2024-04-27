@@ -15,6 +15,7 @@
 #include "threads/vaddr.h"
 #ifdef USERPROG
 #include "userprog/process.h"
+#include "thread.h"
 #endif
 
 /* Random value for struct thread's `magic' member.
@@ -204,6 +205,9 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
 
     /* Add to run queue. */
     thread_unblock(t);
+
+	if(t->priority > thread_current()->priority)
+		thread_yield();
 
     return tid;
 }
@@ -615,3 +619,4 @@ void update_next_tick_to_awake(int64_t ticks) {
 int64_t get_next_tick_to_awake(void) {
     return next_tick_to_awake;   
 }
+
