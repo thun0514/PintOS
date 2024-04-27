@@ -335,17 +335,3 @@ bool cmp_sem_priority(const struct list_elem *a, const struct list_elem *b, void
 
     return thread_a->priority > thread_b->priority;
 }
-/*
-bool
-sema_compare_priority (const struct list_elem *l, const struct list_elem *s, void *aux UNUSED)
-{
-    struct semaphore_elem *l_sema = list_entry (l, struct semaphore_elem, elem);
-    struct semaphore_elem *s_sema = list_entry (s, struct semaphore_elem, elem);
-
-    struct list *waiter_l_sema = &(l_sema->semaphore.waiters);
-    struct list *waiter_s_sema = &(s_sema->semaphore.waiters);
-
-    return list_entry (list_begin (waiter_l_sema), struct thread, elem)->priority
-         > list_entry (list_begin (waiter_s_sema), struct thread, elem)->priority;
-}
-*/

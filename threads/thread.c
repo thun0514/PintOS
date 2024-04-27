@@ -647,8 +647,6 @@ bool cmp_priority(const struct list_elem *a, const struct list_elem *b, void *au
 	if (thread_a == NULL || thread_b == NULL)
 		return false;
 
-    if (thread_a->priority > thread_b->priority)
-        return true;
-
-    return false;
+    return thread_a->priority > thread_b->priority;
+  
 }
