@@ -14,8 +14,8 @@
 #include "threads/synch.h"
 #include "threads/vaddr.h"
 #ifdef USERPROG
-#include "userprog/process.h"
 #include "thread.h"
+#include "userprog/process.h"
 #endif
 
 /* Random value for struct thread's `magic' member.
@@ -206,8 +206,9 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
     /* Add to run queue. */
     thread_unblock(t);
 
-	if(t->priority > thread_current()->priority)
-		thread_yield();
+    /** #Priority Scheduling 새로 생성된 thread의 우선순위가 더 높다면 cpu 인계 */
+    if (t->priority > thread_current()->priority)
+        thread_yield();
 
     return tid;
 }
@@ -240,7 +241,10 @@ void thread_unblock(struct thread *t) {
 
     old_level = intr_disable();
     ASSERT(t->status == THREAD_BLOCKED);
-    list_push_back(&ready_list, &t->elem);
+    
+    /** #Priority Scheduling 우선순위 순으로 정렬되어 list에 삽입 */
+    list_insert_ordered(&ready_list, &t->elem, cmp_priority, &t->priority);
+    // list_push_back(&ready_list, &t->elem);
     t->status = THREAD_READY;
     intr_set_level(old_level);
 }
@@ -617,6 +621,5 @@ void update_next_tick_to_awake(int64_t ticks) {
 
 /** #Alarm Clock 현재 next_tick_to_awake 값 리턴 함수 */
 int64_t get_next_tick_to_awake(void) {
-    return next_tick_to_awake;   
+    return next_tick_to_awake;
 }
-
