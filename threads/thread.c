@@ -207,7 +207,7 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
     thread_unblock(t);
 
     /** #Priority Scheduling 새로 생성된 thread의 우선순위가 더 높다면 cpu 인계 */
-    if (t->priority > thread_current()->priority)
+    if (t->priority > thread_get_priority())
         thread_yield();
 
     return tid;
@@ -626,4 +626,21 @@ void update_next_tick_to_awake(int64_t ticks) {
 /** #Alarm Clock 현재 next_tick_to_awake 값 리턴 함수 */
 int64_t get_next_tick_to_awake(void) {
     return next_tick_to_awake;
+}
+
+/** #Priority Scheduling ready_list에서 우선 순위가 가장 높은 쓰레드와 현재 쓰레드의 우선 순위를 비교 */
+void test_max_priority(void) {
+    thread_t *th = list_front(&ready_list);
+    if (thread_get_priority() < th->priority)
+        thread_yield();
+}
+
+/** #Priority Scheduling 첫번째 인자의 우선순위가 높으면 1, 아니면 0 */
+bool cmp_priority(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED) {
+	thread_t *thread_a = list_entry(a, thread_t, elem);
+    thread_t *thread_b = list_entry(b, thread_t, elem);
+    
+	if (thread_a->priority > thread_b->priority)
+        return true;
+    return false;
 }
