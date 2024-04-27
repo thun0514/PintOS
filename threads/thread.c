@@ -312,6 +312,8 @@ void thread_yield(void) {
 /* Sets the current thread's priority to NEW_PRIORITY. */
 void thread_set_priority(int new_priority) {
     thread_current()->priority = new_priority;
+    /** #Priority Scheduling 우선순위를 비교하여 스케쥴링 하는 함수 호출 */
+    test_max_priority();
 }
 
 /* Returns the current thread's priority. */
