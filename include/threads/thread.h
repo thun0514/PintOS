@@ -91,7 +91,7 @@ typedef struct thread {
     enum thread_status status; /* Thread state. */
     char name[16];             /* Name (for debugging purposes). */
     int priority;              /* Priority. */
-    int64_t wakeup_tick;      /** #Alarm Clock 활성화 틱 */
+    int64_t wakeup_tick;       /** #Alarm Clock 활성화 틱 */
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem; /* List element. */
@@ -108,7 +108,7 @@ typedef struct thread {
     /* Owned by thread.c. */
     struct intr_frame tf; /* Information for switching */
     unsigned magic;       /* Detects stack overflow. */
-}thread_t;
+} thread_t;
 
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
@@ -116,10 +116,16 @@ typedef struct thread {
 extern bool thread_mlfqs;
 
 /** #Alarm Clock 함수 */
+
 void thread_sleep(int64_t ticks);
 void thread_awake(int64_t ticks);
 void update_next_tick_to_awake(int64_t ticks);
 int64_t get_next_tick_to_awake(void);
+
+/** #Priority Scheduling 함수 */
+
+void test_max_priority(void);
+bool cmp_priority(const struct list_elem *a, const struct list_emem *b, void *aux UNUSED);
 
 void thread_init(void);
 void thread_start(void);
