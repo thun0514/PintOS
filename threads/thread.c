@@ -241,7 +241,7 @@ void thread_unblock(struct thread *t) {
 
     old_level = intr_disable();
     ASSERT(t->status == THREAD_BLOCKED);
-    
+
     /** #Priority Scheduling 우선순위 순으로 정렬되어 list에 삽입 */
     list_insert_ordered(&ready_list, &t->elem, cmp_priority, &t->priority);
     // list_push_back(&ready_list, &t->elem);
@@ -302,7 +302,9 @@ void thread_yield(void) {
 
     old_level = intr_disable();
     if (curr != idle_thread)
-        list_push_back(&ready_list, &curr->elem);
+        /** #Priority Scheduling 우선순위 순으로 정렬되어 list에 삽입 */
+        list_insert_ordered(&ready_list, &curr->elem, cmp_priority, &curr->priority);
+    // list_push_back(&ready_list, &curr->elem);
     do_schedule(THREAD_READY);
     intr_set_level(old_level);
 }
