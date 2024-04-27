@@ -35,12 +35,12 @@ struct condition {
 
 void cond_init (struct condition *);
 void cond_wait (struct condition *, struct lock *);
-void cond_signal(struct condition *cond, struct lock *lock UNUSED);  /** #Priority Scheduling - Synchronization 함수 수정 */
+void cond_signal(struct condition *, struct lock *);
 void cond_broadcast (struct condition *, struct lock *);
 
 /** #Priority Scheduling - Synchronization 함수 */
 
-bool cmp_sem_priority(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED);
+bool cmp_sem_priority(const struct list_elem *, const struct list_elem *, void *);
 
 /* Optimization barrier.
  *
