@@ -654,3 +654,18 @@ bool cmp_priority(const struct list_elem *a, const struct list_elem *b, void *au
 
     return thread_a->priority > thread_b->priority;
 }
+
+/** #Priority Donation - 현재 쓰레드가 기다리고 있는 lock과 연결된 모든 쓰레드들을 순회하며
+    현재 쓰레드의 우선순위를 lock을 보유하고 있는 쓰레드에게 기부한다. */
+void donate_priority() {
+    thread_t *t = thread_current();
+    int priority = t->priority;
+
+    for (int depth = 0; depth < 8; depth++) {
+        if (t->wait_lock == NULL)
+            break;
+
+        t = t->wait_lock->holder;
+        t->priority = priority;
+    }
+}
