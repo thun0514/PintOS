@@ -400,9 +400,10 @@ static void init_thread(struct thread *t, const char *name, int priority) {
     t->status = THREAD_BLOCKED;
     strlcpy(t->name, name, sizeof t->name);
     t->tf.rsp = (uint64_t)t + PGSIZE - sizeof(void *);
-    
+
     /** #Priority Donation 자료구조 초기화 */
     t->priority = t->original_priority = priority;
+    list_init(&t->donations);
     t->lock_address = NULL;
 
     t->magic = THREAD_MAGIC;
