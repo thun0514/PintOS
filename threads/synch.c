@@ -170,21 +170,30 @@ void lock_init(struct lock *lock) {
     sema_init(&lock->semaphore, 1);
 }
 
-/* Acquires LOCK, sleeping until it becomes available if
-   necessary.  The lock must not already be held by the current
-   thread.
+/* LOCK을 획득하고 필요한 경우 사용할 수 있을 때까지 절전 모드로 유지됩니다.
+   현재 스레드가 잠금을 이미 보유하고 있으면 안 됩니다.
 
-   This function may sleep, so it must not be called within an
-   interrupt handler.  This function may be called with
-   interrupts disabled, but interrupts will be turned back on if
-   we need to sleep. */
+   이 함수는 절전 모드일 수 있으므로 인터럽트 핸들러 내에서 호출하면 안 됩니다.
+   이 함수는 인터럽트가 비활성화된 상태에서 호출될 수 있지만 절전 모드가
+   필요할 경우 인터럽트가 다시 켜집니다. */
 void lock_acquire(struct lock *lock) {
     ASSERT(lock != NULL);
     ASSERT(!intr_context());
     ASSERT(!lock_held_by_current_thread(lock));
 
+    /** #Priority Donation wait를 하게 될 lock 포인터 저장 후 대기 리스트에 추가하고 priority donation 수행 */
+    thread_t *t = thread_current();
+    if (lock_held_by_current_thread(lock)) {
+        t->wait_lock = lock;
+        list_insert(&t->donations, &t->donation_elem);
+        donate_priority();
+    }
+
     sema_down(&lock->semaphore);
-    lock->holder = thread_current();
+
+    /** #Priority Donation 기다리고 있던 lock 포인터 반환 후 holder 갱신 */
+    t->wait_lock = NULL;
+    lock->holder = t;
 }
 
 /* Tries to acquires LOCK and returns true if successful or false
