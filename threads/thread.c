@@ -655,7 +655,7 @@ bool cmp_priority(const struct list_elem *a, const struct list_elem *b, void *au
     return thread_a->priority > thread_b->priority;
 }
 
-/** #Priority Donation - 현재 쓰레드가 기다리고 있는 lock과 연결된 모든 쓰레드들을 순회하며
+/** #Priority Donation 현재 쓰레드가 기다리고 있는 lock과 연결된 모든 쓰레드들을 순회하며
     현재 쓰레드의 우선순위를 lock을 보유하고 있는 쓰레드에게 기부한다. */
 void donate_priority() {
     thread_t *t = thread_current();
@@ -667,5 +667,20 @@ void donate_priority() {
 
         t = t->wait_lock->holder;
         t->priority = priority;
+    }
+}
+/** #Priority Donation 현재 쓰레드의 waiters 리스트를 확인하여 해지할 lock을 보유하고 있는 엔트리를 삭제한다. */
+void remove_with_lock(struct lock *lock) {
+    thread_t *t = thread_current();
+    thread_t *curr_thread = NULL;
+    struct list_elem *curr = list_begin(&t->donations);
+
+    while (curr->next != NULL) {
+        curr_thread = list_entry(curr, thread_t, donation_elem);
+        if (curr_thread->wait_lock == lock) {
+            curr = list_remove(curr);
+        }
+
+        curr = list_next(curr);
     }
 }
