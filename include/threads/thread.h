@@ -98,8 +98,8 @@ typedef struct thread {
 
     /** #Priority Donation 관련 항목 추가 */
     int original_priority;
-    struct lock *lock_address;
-    struct list donation;
+    struct lock *wait_lock;
+    struct list donations;
     struct list_elem donation_elem;
 
 #ifdef USERPROG
