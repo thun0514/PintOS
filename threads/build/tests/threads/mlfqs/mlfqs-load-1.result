@@ -1,11 +1,11 @@
 FAIL
-Kernel panic in run: PANIC at ../../lib/kernel/list.c:72 in list_next(): assertion `is_head(elem) || is_interior(elem)' failed.
-Call stack: 0x80042143f6 0x80042146a8 0x8004207e94 0x800420a6b0 0x8004207a9a 0x8004206a1c 0x8004206070
+Kernel panic in run: PANIC at ../../tests/threads/tests.c:93 in fail(): test failed
+Call stack: 0x800421440a 0x8004217df4 0x800421b1c2 0x8004217c0b 0x8004206677 0x80042067e1 0x800420612b
 Translation of call stack:
-0x00000080042143f6: debug_panic (lib/kernel/debug.c:32)
-0x00000080042146a8: list_next (lib/kernel/list.c:73)
-0x0000008004207e94: remove_with_lock (threads/thread.c:690)
-0x000000800420a6b0: lock_release (threads/synch.c:228)
-0x0000008004207a9a: allocate_tid (threads/thread.c:587)
-0x0000008004206a1c: thread_init (threads/thread.c:122)
-0x0000008004206070: main (threads/init.c:83)
+0x000000800421440a: debug_panic (lib/kernel/debug.c:32)
+0x0000008004217df4: pass (tests/threads/tests.c:99)
+0x000000800421b1c2: test_mlfqs_load_1 (tests/threads/mlfqs/mlfqs-load-1.c:31)
+0x0000008004217c0b: run_test (tests/threads/tests.c:57)
+0x0000008004206677: run_task (threads/init.c:247)
+0x00000080042067e1: run_actions (threads/init.c:287)
+0x000000800420612b: main (threads/init.c:125)

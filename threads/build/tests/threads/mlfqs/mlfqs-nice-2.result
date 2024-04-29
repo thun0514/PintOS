@@ -1,11 +1,6 @@
 FAIL
-Kernel panic in run: PANIC at ../../lib/kernel/list.c:72 in list_next(): assertion `is_head(elem) || is_interior(elem)' failed.
-Call stack: 0x80042143f6 0x80042146a8 0x8004207e94 0x800420a6b0 0x8004207a9a 0x8004206a1c 0x8004206070
-Translation of call stack:
-0x00000080042143f6: debug_panic (lib/kernel/debug.c:32)
-0x00000080042146a8: list_next (lib/kernel/list.c:73)
-0x0000008004207e94: remove_with_lock (threads/thread.c:690)
-0x000000800420a6b0: lock_release (threads/synch.c:228)
-0x0000008004207a9a: allocate_tid (threads/thread.c:587)
-0x0000008004206a1c: thread_init (threads/thread.c:122)
-0x0000008004206070: main (threads/init.c:83)
+Some tick counts were missing or differed from those expected by more than 50.
+thread   actual <-> expected explanation
+------ -------- --- -------- ----------------------------------------
+     0     1500 <<< 1904     Too small, by 354.
+     1     1500 >>> 1096     Too big, by 354.
