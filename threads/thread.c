@@ -400,7 +400,11 @@ static void init_thread(struct thread *t, const char *name, int priority) {
     t->status = THREAD_BLOCKED;
     strlcpy(t->name, name, sizeof t->name);
     t->tf.rsp = (uint64_t)t + PGSIZE - sizeof(void *);
-    t->priority = priority;
+    
+    /** #Priority Donation 자료구조 초기화 */
+    t->priority = t->original_priority = priority;
+    t->lock_address = NULL;
+
     t->magic = THREAD_MAGIC;
 }
 
@@ -644,9 +648,8 @@ bool cmp_priority(const struct list_elem *a, const struct list_elem *b, void *au
     thread_t *thread_a = list_entry(a, thread_t, elem);
     thread_t *thread_b = list_entry(b, thread_t, elem);
 
-	if (thread_a == NULL || thread_b == NULL)
-		return false;
+    if (thread_a == NULL || thread_b == NULL)
+        return false;
 
     return thread_a->priority > thread_b->priority;
-  
 }
