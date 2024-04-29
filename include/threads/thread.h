@@ -92,9 +92,15 @@ typedef struct thread {
     char name[16];             /* Name (for debugging purposes). */
     int priority;              /* Priority. */
     int64_t wakeup_tick;       /** #Alarm Clock 활성화 틱 */
-
+    
     /* Shared between thread.c and synch.c. */
     struct list_elem elem; /* List element. */
+
+    /** #Priority Donation 관련 항목 추가 */
+    int original_priority;
+    struct lock *lock_address;
+    struct list donation;
+    struct list_elem donation_elem;
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
