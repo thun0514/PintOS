@@ -680,16 +680,30 @@ void remove_with_lock(struct lock *lock) {
     struct list_elem *curr = list_begin(&t->donations);
     thread_t *curr_thread = NULL;
 
-    while (curr->next != NULL) {
+    while (curr != list_end(&t->donations)) {
         curr_thread = list_entry(curr, thread_t, donation_elem);
-        if (curr_thread->wait_lock == lock) {
-            curr = list_remove(curr);
-            continue;
-        }
+
+        if (curr_thread->wait_lock == lock)
+            list_remove(&curr_thread->donation_elem);
 
         curr = list_next(curr);
     }
 }
+
+/*
+void
+remove_with_lock (struct lock *lock)
+{
+  struct thread *t = thread_current ();
+  struct list_elem *curr = list_begin (&t->donations);
+
+  for (; curr != list_end (&t->donations); curr = list_next (curr)){
+    struct thread *curr_thread = list_entry (curr, struct thread, donation_elem);
+    if (curr_thread->wait_on_lock == lock)
+      list_remove (&curr_thread->donation_elem);
+  }
+}
+*/
 
 /** 쓰레드의 우선순위가 변경되었을 때, donation을 고려하여 우선순위를 다시 결정하는 함수 */
 void refresh_priority(void) {
