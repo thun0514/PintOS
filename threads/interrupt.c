@@ -110,17 +110,13 @@ void intr_handler(struct intr_frame *args);
 enum intr_level intr_get_level(void) {
     uint64_t flags;
 
-    /* Push the flags register on the processor stack, then pop the
-       value off the stack into `flags'.  See [IA32-v2b] "PUSHF"
-       and "POP" and [IA32-v3a] 5.8.1 "Masking Maskable Hardware
-       Interrupts". */
+/*프로세서 스택에 플래그 레지스터를 푸시한 다음 스택의 값을 '플래그'로 팝합니다. [IA32-v2b] "PUSHF" 및 "POP" 및 [IA32-v3a] 5.8.1 "마스킹 가능한 하드웨어 인터럽트 마스킹"을 참조하세요. */
     asm volatile("pushfq; popq %0" : "=g"(flags));
 
     return flags & FLAG_IF ? INTR_ON : INTR_OFF;
 }
 
-/* Enables or disables interrupts as specified by LEVEL and
-   returns the previous interrupt status. */
+/* LEVEL에 지정된 대로 인터럽트를 활성화하거나 비활성화하고 이전 인터럽트 상태를 반환합니다. */
 enum intr_level intr_set_level(enum intr_level level) {
     return level == INTR_ON ? intr_enable() : intr_disable();
 }
@@ -130,10 +126,9 @@ enum intr_level intr_enable(void) {
     enum intr_level old_level = intr_get_level();
     ASSERT(!intr_context());
 
-    /* Enable interrupts by setting the interrupt flag.
+    /* 인터럽트 플래그를 설정하여 인터럽트를 활성화합니다.
 
-       See [IA32-v2b] "STI" and [IA32-v3a] 5.8.1 "Masking Maskable
-       Hardware Interrupts". */
+       [IA32-v2b] "STI" 및 [IA32-v3a] 5.8.1 "마스킹 가능한 하드웨어 인터럽트 마스킹"을 참조하세요. */
     asm volatile("sti");
 
     return old_level;
@@ -143,9 +138,9 @@ enum intr_level intr_enable(void) {
 enum intr_level intr_disable(void) {
     enum intr_level old_level = intr_get_level();
 
-    /* Disable interrupts by clearing the interrupt flag.
-       See [IA32-v2b] "CLI" and [IA32-v3a] 5.8.1 "Masking Maskable
-       Hardware Interrupts". */
+    /* 인터럽트 플래그를 지워 인터럽트를 비활성화합니다.
+
+       [IA32-v2b] "CLI" 및 [IA32-v3a] 5.8.1 "마스킹 가능한 하드웨어 인터럽트 마스킹"을 참조하세요. */
     asm volatile("cli" : : : "memory");
 
     return old_level;
@@ -194,10 +189,9 @@ void intr_init(void) {
     intr_names[19] = "#XF SIMD Floating-Point Exception";
 }
 
-/* Registers interrupt VEC_NO to invoke HANDLER with descriptor
-   privilege level DPL.  Names the interrupt NAME for debugging
-   purposes.  The interrupt handler will be invoked with
-   interrupt status set to LEVEL. */
+/* Descriptor Privilege Level DPL으로 HANDLER를 호출하기 위해 인터럽트 VEC_NO를 등록합니다. 디버깅
+   목적으로 인터럽트 이름을 NAME으로 지정합니다. 인터럽트 핸들러는 인터럽트 상태가 LEVEL로
+   설정된 상태로 호출됩니다. */
 static void register_handler(uint8_t vec_no, int dpl, enum intr_level level, intr_handler_func *handler, const char *name) {
     ASSERT(intr_handlers[vec_no] == NULL);
     if (level == INTR_ON) {
@@ -209,42 +203,33 @@ static void register_handler(uint8_t vec_no, int dpl, enum intr_level level, int
     intr_names[vec_no] = name;
 }
 
-/* Registers external interrupt VEC_NO to invoke HANDLER, which
-   is named NAME for debugging purposes.  The handler will
-   execute with interrupts disabled. */
+/* 디버깅 목적으로 NAME이라는 HANDLER를 호출하기 위해 외부 인터럽트 VEC_NO를 등록합니다.
+   핸들러는 인터럽트가 비활성화된 상태로 실행됩니다. */
 void intr_register_ext(uint8_t vec_no, intr_handler_func *handler, const char *name) {
     ASSERT(vec_no >= 0x20 && vec_no <= 0x2f);
     register_handler(vec_no, 0, INTR_OFF, handler, name);
 }
 
-/* Registers internal interrupt VEC_NO to invoke HANDLER, which
-   is named NAME for debugging purposes.  The interrupt handler
-   will be invoked with interrupt status LEVEL.
+/* 디버깅 목적으로 NAME이라는 HANDLER를 호출하기 위해 내부 인터럽트 VEC_NO를 등록합니다.
+   인터럽트 핸들러는 인터럽트 상태 LEVEL로 호출됩니다.
 
-   The handler will have descriptor privilege level DPL, meaning
-   that it can be invoked intentionally when the processor is in
-   the DPL or lower-numbered ring.  In practice, DPL==3 allows
-   user mode to invoke the interrupts and DPL==0 prevents such
-   invocation.  Faults and exceptions that occur in user mode
-   still cause interrupts with DPL==0 to be invoked.  See
-   [IA32-v3a] sections 4.5 "Privilege Levels" and 4.8.1.1
-   "Accessing Nonconforming Code Segments" for further
-   discussion. */
+   핸들러에는 설명자 권한 수준 DPL이 있습니다. 즉, 프로세서가 DPL 또는 낮은 번호의 링에 있을
+   때 의도적으로 호출될 수 있습니다. 실제로 DPL==3은 사용자 모드가 인터럽트를 호출하도록 허용
+   하고 DPL==0은 그러한 호출을 방지합니다. 사용자 모드에서 발생하는 오류 및 예외로 인해 여전히
+   DPL==0인 인터럽트가 호출됩니다. 자세한 내용은 [IA32-v3a] 섹션 4.5 "권한 수준" 및 4.8.1.1
+   "부적합 코드 세그먼트 액세스"를 참조하세요. */
 void intr_register_int(uint8_t vec_no, int dpl, enum intr_level level, intr_handler_func *handler, const char *name) {
     ASSERT(vec_no < 0x20 || vec_no > 0x2f);
     register_handler(vec_no, dpl, level, handler, name);
 }
 
-/* Returns true during processing of an external interrupt
-   and false at all other times. */
+/* 외부 인터럽트를 처리하는 동안에는 true를 반환하고 그 외의 경우에는 false를 반환합니다. */
 bool intr_context(void) {
     return in_external_intr;
 }
 
-/* During processing of an external interrupt, directs the
-   interrupt handler to yield to a new process just before
-   returning from the interrupt.  May not be called at any other
-   time. */
+/* 외부 인터럽트를 처리하는 동안 인터럽트 핸들러가 인터럽트에서 복귀하기 직전에 새 프로
+   세스를 양보하도록 지시합니다. 그 외 시간에는 호출할 수 없습니다. */
 void intr_yield_on_return(void) {
     ASSERT(intr_context());
     yield_on_return = true;
@@ -252,18 +237,15 @@ void intr_yield_on_return(void) {
 
 /* 8259A Programmable Interrupt Controller. */
 
-/* Every PC has two 8259A Programmable Interrupt Controller (PIC)
-   chips.  One is a "master" accessible at ports 0x20 and 0x21.
-   The other is a "slave" cascaded onto the master's IRQ 2 line
-   and accessible at ports 0xa0 and 0xa1.  Accesses to port 0x20
-   set the A0 line to 0 and accesses to 0x21 set the A1 line to
-   1.  The situation is similar for the slave PIC.
+/* 모든 PC에는 두 개의 8259A 프로그래밍 가능 인터럽트 컨트롤러(PIC) 칩이 있습니다.
+  하나는 포트 0x20 및 0x21에서 액세스할 수 있는 "마스터"입니다. 다른 하나는 마스터의
+  IRQ 2 라인에 계단식으로 연결되고 포트 0xa0 및 0xa1에서 액세스할 수 있는 "슬레이브"
+  입니다. 포트 0x20에 액세스하면 A0 라인이 0으로 설정되고 0x21에 액세스하면 A1 라인이
+  1로 설정됩니다. 상황은 슬레이브 PIC와 유사합니다.
 
-   By default, interrupts 0...15 delivered by the PICs will go to
-   interrupt vectors 0...15.  Unfortunately, those vectors are
-   also used for CPU traps and exceptions.  We reprogram the PICs
-   so that interrupts 0...15 are delivered to interrupt vectors
-   32...47 (0x20...0x2f) instead. */
+  기본적으로 PIC가 전달하는 인터럽트 0~15는 인터럽트 벡터 0~15로 이동합니다. 불행하게도
+  이러한 벡터는 CPU 트랩 및 예외에도 사용됩니다. 대신 인터럽트 0...15가 인터럽트 벡터
+  32...47(0x20...0x2f)에 전달되도록 PIC를 다시 프로그래밍합니다. */
 
 /* Initializes the PICs.  Refer to [8259A] for details. */
 static void pic_init(void) {
@@ -288,9 +270,8 @@ static void pic_init(void) {
     outb(0xa1, 0x00);
 }
 
-/* Sends an end-of-interrupt signal to the PIC for the given IRQ.
-   If we don't acknowledge the IRQ, it will never be delivered to
-   us again, so this is important.  */
+/* 주어진 IRQ에 대해 인터럽트 종료 신호를 PIC에 보냅니다.
+   IRQ를 승인하지 않으면 다시는 전달되지 않으므로 이것이 중요합니다.  */
 static void pic_end_of_interrupt(int irq) {
     ASSERT(irq >= 0x20 && irq < 0x30);
 
@@ -303,18 +284,16 @@ static void pic_end_of_interrupt(int irq) {
 }
 /* Interrupt handlers. */
 
-/* Handler for all interrupts, faults, and exceptions.  This
-   function is called by the assembly language interrupt stubs in
-   intr-stubs.S.  FRAME describes the interrupt and the
-   interrupted thread's registers. */
+/* 모든 인터럽트, 오류 및 예외에 대한 처리기입니다. 이 함수는 intr-stubs.S의
+   어셈블리 언어 인터럽트 스텁에 의해 호출됩니다. FRAME은 인터럽트와 인터럽트된
+   스레드의 레지스터를 설명합니다. */
 void intr_handler(struct intr_frame *frame) {
     bool external;
     intr_handler_func *handler;
 
-    /* External interrupts are special.
-       We only handle one at a time (so interrupts must be off)
-       and they need to be acknowledged on the PIC (see below).
-       An external interrupt handler cannot sleep. */
+    /* 외부 인터럽트는 특별합니다. 외부 인터럽트는 한 번에 하나씩만 처리하며
+       (따라서 인터럽트는 꺼져 있어야 함) PIC에서 승인되어야 합니다(아래 참조).
+       외부 인터럽트 핸들러는 잠들 수 없습니다. */
     external = frame->vec_no >= 0x20 && frame->vec_no < 0x30;
     if (external) {
         ASSERT(intr_get_level() == INTR_OFF);
@@ -329,9 +308,8 @@ void intr_handler(struct intr_frame *frame) {
     if (handler != NULL)
         handler(frame);
     else if (frame->vec_no == 0x27 || frame->vec_no == 0x2f) {
-        /* There is no handler, but this interrupt can trigger
-           spuriously due to a hardware fault or hardware race
-           condition.  Ignore it. */
+        /* 핸들러는 없지만 이 인터럽트는 하드웨어 결함이나 하드웨어 경쟁 조건으로 인해
+           허위로 트리거될 수 있습니다. 무시하세요. */
     } else {
         /* No handler and not spurious.  Invoke the unexpected
            interrupt handler. */
@@ -354,10 +332,9 @@ void intr_handler(struct intr_frame *frame) {
 
 /* Dumps interrupt frame F to the console, for debugging. */
 void intr_dump_frame(const struct intr_frame *f) {
-    /* CR2 is the linear address of the last page fault.
-       See [IA32-v2a] "MOV--Move to/from Control Registers" and
-       [IA32-v3a] 5.14 "Interrupt 14--Page Fault Exception
-       (#PF)". */
+    /* CR2는 마지막 페이지 폴트의 선형 주소입니다.
+       [IA32-v2a] "MOV--제어 레지스터로/에서 이동" 및
+       [IA32-v3a] 5.14 "인터럽트 14--페이지 오류 예외(#PF)"를 참조하세요 ". */
     uint64_t cr2 = rcr2();
     printf("Interrupt %#04llx (%s) at rip=%llx\n", f->vec_no, intr_names[f->vec_no], f->rip);
     printf(" cr2=%016llx error=%16llx\n", cr2, f->error_code);
