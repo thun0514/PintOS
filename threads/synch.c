@@ -185,7 +185,7 @@ void lock_acquire(struct lock *lock) {
     thread_t *t = thread_current();
     if (lock_held_by_current_thread(lock)) {
         t->wait_lock = lock;
-        list_insert(&t->donations, &t->donation_elem);
+        list_insert(&lock->holder->donations, &t->donation_elem);
         donate_priority();
     }
 
