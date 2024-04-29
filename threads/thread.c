@@ -669,18 +669,39 @@ void donate_priority() {
         t->priority = priority;
     }
 }
+
 /** #Priority Donation 현재 쓰레드의 waiters 리스트를 확인하여 해지할 lock을 보유하고 있는 엔트리를 삭제한다. */
 void remove_with_lock(struct lock *lock) {
     thread_t *t = thread_current();
-    thread_t *curr_thread = NULL;
     struct list_elem *curr = list_begin(&t->donations);
+    thread_t *curr_thread = NULL;
 
     while (curr->next != NULL) {
         curr_thread = list_entry(curr, thread_t, donation_elem);
         if (curr_thread->wait_lock == lock) {
             curr = list_remove(curr);
+            continue;
         }
 
         curr = list_next(curr);
     }
+}
+
+/** 쓰레드의 우선순위가 변경되었을 때, donation을 고려하여 우선순위를 다시 결정하는 함수 */
+void refresh_priority(void) {
+    /* 현재 쓰레드의 우선순위를 기부 받기 전의 우선순위로 변경.
+    현재 쓰레드의 waiters 리스트에서 가장 높은 우선순위를 현재 쓰레드의 우선순위와 비교 후 우선순위 결정 */
+    thread_t *t = thread_current();
+    t->priority = t->original_priority;
+
+    if (list_empty(&t->donations))
+        return;
+
+    list_sort(&t->donations, cmp_priority, NULL);
+
+    struct list_elem *max_elem = list_front(&t->donations);
+    thread_t *max_thread = list_entry(max_elem, thread_t, donation_elem);
+
+    if (t->priority < max_thread->priority)
+        t->priority = max_thread->priority;
 }
