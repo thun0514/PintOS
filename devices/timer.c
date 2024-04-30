@@ -124,9 +124,6 @@ static void timer_interrupt(struct intr_frame *args UNUSED) {
         mlfqs_increment();
 
         if (!(ticks % 4)) {
-            if (ticks >= 13000)
-                printf("TICK\n");
-
             mlfqs_recalc_priority();
 
             if (!(ticks % TIMER_FREQ)) {
@@ -137,9 +134,8 @@ static void timer_interrupt(struct intr_frame *args UNUSED) {
     }
 
     /** #Alarm Clock 현재 활성화되어야 하는 thread가 있는지 탐색하여 활성화 */
-    if (get_next_tick_to_awake() <= ticks) {
+    if (get_next_tick_to_awake() <= ticks)
         thread_awake(ticks);
-    }
 }
 
 /* loop가 1개 초과시 true 반환 */

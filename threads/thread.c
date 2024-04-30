@@ -128,6 +128,7 @@ void thread_init(void) {
     /* Set up a thread structure for the running thread. */
     initial_thread = running_thread();
     init_thread(initial_thread, "main", PRI_DEFAULT);
+    list_push_back(&all_list, &(initial_thread->all_elem));
     initial_thread->status = THREAD_RUNNING;
     initial_thread->tid = allocate_tid();
 }
@@ -216,6 +217,9 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
     t->tf.cs = SEL_KCSEG;
     t->tf.eflags = FLAG_IF;
 
+    /** #Advanced Scheduler all_list에 element 추가 */
+    // list_push_back(&all_list, &t->all_elem);
+
     /* Add to run queue. */
     thread_unblock(t);
 
@@ -297,6 +301,8 @@ void thread_exit(void) {
 #ifdef USERPROG
     process_exit();
 #endif
+    /* 스레드 종료 시 all_list에서 제거 */
+    list_remove(&thread_current()->all_elem);
 
     /* Just set our status to dying and schedule another process.
        We will be destroyed during the call to schedule_tail(). */
@@ -798,7 +804,7 @@ void mlfqs_recalc_recent_cpu(void) {
     struct list_elem *e = list_begin(&all_list);
     thread_t *t = NULL;
 
-    while (e->next != NULL) {
+    while (e != list_end(&all_list)) {
         t = list_entry(e, thread_t, all_elem);
         mlfqs_recent_cpu(t);
 
@@ -811,7 +817,7 @@ void mlfqs_recalc_priority(void) {
     struct list_elem *e = list_begin(&all_list);
     thread_t *t = NULL;
 
-    while (e->next != NULL) {
+    while (e != list_end(&all_list)) {
         t = list_entry(e, thread_t, all_elem);
         mlfqs_priority(t);
 
