@@ -121,14 +121,17 @@ void thread_init(void) {
 
     /** #Alarm Clock sleep list 초기화 */
     list_init(&sleep_list);
-
-    /** #Advanced Scheduler all list 초기화 */
-    list_init(&all_list);
-
+    
     /* Set up a thread structure for the running thread. */
     initial_thread = running_thread();
     init_thread(initial_thread, "main", PRI_DEFAULT);
-    list_push_back(&all_list, &(initial_thread->all_elem));
+
+    /** #Advanced Scheduler all list 초기화 */
+    if (thread_mlfqs) {
+        list_init(&all_list);
+        list_push_back(&all_list, &(initial_thread->all_elem));
+    }
+
     initial_thread->status = THREAD_RUNNING;
     initial_thread->tid = allocate_tid();
 }
@@ -302,7 +305,8 @@ void thread_exit(void) {
     process_exit();
 #endif
     /* 스레드 종료 시 all_list에서 제거 */
-    list_remove(&thread_current()->all_elem);
+    if (thread_mlfqs)
+        list_remove(&thread_current()->all_elem);
 
     /* Just set our status to dying and schedule another process.
        We will be destroyed during the call to schedule_tail(). */
