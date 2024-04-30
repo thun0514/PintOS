@@ -787,17 +787,28 @@ void mlfqs_increment(void) {
     thread_current()->recent_cpu = add_mixed(thread_current()->recent_cpu, 1);
 }
 
-/** #Advanced Scheduler Multi Level Feedback Queue Schedule 모든 Priority & Recent CPU 재계산 */
-void mlfqs_recalc(void) {
+/** #Advanced Scheduler Multi Level Feedback Queue Schedule 모든 Recent CPU 재계산 */
+void mlfqs_recalc_recent_cpu(void) {
     struct list_elem *e = list_begin(&all_list);
     thread_t *t = NULL;
 
     while (e != list_end(&all_list)) {
         t = list_entry(e, thread_t, all_elem);
         mlfqs_recent_cpu(t);
-        mlfqs_priority(t);
 
         e = list_next(&e);
     }
 }
 
+/** #Advanced Scheduler Multi Level Feedback Queue Schedule 모든 Priority 재계산 */
+void mlfqs_recalc_priority(void) {
+    struct list_elem *e = list_begin(&all_list);
+    thread_t *t = NULL;
+
+    while (e != list_end(&all_list)) {
+        t = list_entry(e, thread_t, all_elem);
+        mlfqs_priority(t);
+
+        e = list_next(&e);
+    }
+}
