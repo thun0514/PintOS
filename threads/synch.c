@@ -181,9 +181,9 @@ void lock_acquire(struct lock *lock) {
     ASSERT(!intr_context());
     ASSERT(!lock_held_by_current_thread(lock));
 
-    /** #Priority Donation wait를 하게 될 lock 포인터 저장 후 대기 리스트에 추가하고 priority donation 수행 */
+    /** #Priority Donation & Advanced Scheduler mlfqs 스케줄러 비활성화시 wait를 하게 될 lock 포인터 저장 후 대기 리스트에 추가하고 priority donation 수행 */
     thread_t *t = thread_current();
-    if (lock->holder != NULL) {
+    if (lock->holder != NULL && !thread_mlfqs) {
         t->wait_lock = lock;
         list_push_back(&lock->holder->donations, &t->donation_elem);
         donate_priority();
@@ -223,9 +223,11 @@ void lock_release(struct lock *lock) {
 
     lock->holder = NULL;
 
-    /** #Priority Donation 현재 쓰레드 대기 리스트 및 priority 갱신  */
-    remove_with_lock(lock);
-    refresh_priority();
+    /** #Priority Donation & Advanced Scheduler mlfqs 스케줄러 비활성화시 현재 쓰레드 대기 리스트 및 priority 갱신  */
+    if (!thread_mlfqs) {
+        remove_with_lock(lock);
+        refresh_priority();
+    }
 
     sema_up(&lock->semaphore);
 }
