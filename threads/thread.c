@@ -343,20 +343,31 @@ int thread_get_priority(void) {
     return thread_current()->priority;
 }
 
-/* Sets the current thread's nice value to NICE. */
+/** #Advanced Scheduler 현재 thread의 niceness값을 변경하는 함수 */
 void thread_set_nice(int nice UNUSED) {
-    /* TODO: Your implementation goes here */
+    thread_t *t = thread_current();
+
+    enum intr_level old_level = intr_disable();
+    t->niceness = nice;
+    mlfqs_priority(t);
+    test_max_priority();
+    intr_set_level(old_level);
 }
 
-/* Returns the current thread's nice value. */
+/** #Advanced Scheduler 현재 thread의 niceness값을 반환하는 함수 */
 int thread_get_nice(void) {
-    /* TODO: Your implementation goes here */
-    return 0;
+    thread_t *t = thread_current();
+
+    enum intr_level old_level = intr_disable();
+    int nice = t->niceness;
+    intr_set_level(old_level);
+    
+    return nice;
 }
 
 /* Returns 100 times the system load average. */
 int thread_get_load_avg(void) {
-    /* TODO: Your implementation goes here */
+    
     return 0;
 }
 
@@ -781,3 +792,4 @@ void mlfqs_recalc(void) {
         e = list_next(&e);
     }
 }
+
