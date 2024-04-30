@@ -365,16 +365,24 @@ int thread_get_nice(void) {
     return nice;
 }
 
-/* Returns 100 times the system load average. */
+/** #Advanced Scheduler load_avg에 100을 곱해서 반환하는 함수 */
 int thread_get_load_avg(void) {
+    enum intr_level old_level = intr_disable();
+    int load_avg_val = fp_to_int(mult_mixed(load_avg, 100));
+    intr_set_level(old_level);
     
-    return 0;
+    return load_avg_val;
 }
 
 /* Returns 100 times the current thread's recent_cpu value. */
 int thread_get_recent_cpu(void) {
-    /* TODO: Your implementation goes here */
-    return 0;
+    thread_t *t = thread_current();
+
+    enum intr_level old_level = intr_disable();
+    int recent_cpu = fp_to_int(mult_mixed(&t->recent_cpu, 100));
+    intr_set_level(old_level);
+    
+    return recent_cpu;
 }
 
 /* Idle thread.  Executes when no other thread is ready to run.
