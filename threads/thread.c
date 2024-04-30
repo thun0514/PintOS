@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "intrinsic.h"
+#include "threads/fixed_point.h"
 #include "threads/flags.h"
 #include "threads/interrupt.h"
 #include "threads/intr-stubs.h"
@@ -55,6 +56,9 @@ static long long user_ticks;   /* # of timer ticks in user programs. */
 /* Scheduling. */
 #define TIME_SLICE 4          /* # of timer ticks to give each thread. */
 static unsigned thread_ticks; /* # of timer ticks since last yield. */
+
+/** #Advanced Scheduler */
+int load_avg;
 
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
@@ -129,6 +133,9 @@ void thread_start(void) {
     struct semaphore idle_started;
     sema_init(&idle_started, 0);
     thread_create("idle", PRI_MIN, idle, &idle_started);
+
+    /** #Advanced Scheduler */
+    load_avg = LOAD_AVG_DEFAULT;
 
     /* Start preemptive thread scheduling. */
     intr_enable();
