@@ -324,7 +324,6 @@ void thread_yield(void) {
 
 /* Sets the current thread's priority to NEW_PRIORITY. */
 void thread_set_priority(int new_priority) {
-    
     /** #Advanced Scheduler mlfqs 스케줄러 일때 우선순위를 임의로 변경할수 없도록 수정 */
     if (thread_mlfqs)
         return;
@@ -361,7 +360,7 @@ int thread_get_nice(void) {
     enum intr_level old_level = intr_disable();
     int nice = t->niceness;
     intr_set_level(old_level);
-    
+
     return nice;
 }
 
@@ -370,7 +369,7 @@ int thread_get_load_avg(void) {
     enum intr_level old_level = intr_disable();
     int load_avg_val = fp_to_int(mult_mixed(load_avg, 100));
     intr_set_level(old_level);
-    
+
     return load_avg_val;
 }
 
@@ -381,7 +380,7 @@ int thread_get_recent_cpu(void) {
     enum intr_level old_level = intr_disable();
     int recent_cpu = fp_to_int(mult_mixed(&t->recent_cpu, 100));
     intr_set_level(old_level);
-    
+
     return recent_cpu;
 }
 
@@ -442,14 +441,31 @@ static void init_thread(struct thread *t, const char *name, int priority) {
     strlcpy(t->name, name, sizeof t->name);
     t->tf.rsp = (uint64_t)t + PGSIZE - sizeof(void *);
 
-    /** #Priority Donation 자료구조 초기화 */
-    t->priority = t->original_priority = priority;
-    list_init(&t->donations);
+    /** #Advanced Scheduler */
+    if (thread_mlfqs) {
+        if (initial_thread == t) {
+            t->niceness = 0;
+            t->recent_cpu = 0;
+        } else {
+            t->niceness = thread_current()->niceness;
+            t->recent_cpu = thread_current()->recent_cpu;
+        }
+
+        mlfqs_priority(t);
+        list_push_back(&all_list, &t->all_elem);
+
+    } else {
+        /** #Priority Donation 자료구조 초기화 */
+        t->priority = priority;
+    }
+    
     t->wait_lock = NULL;
+    list_init(&t->donations);
 
     t->magic = THREAD_MAGIC;
 
     /** #Advanced Scheduler */
+    t->original_priority = t->priority;
     t->niceness = NICE_DEFAULT;
     t->recent_cpu = RECENT_CPU_DEFAULT;
 }
