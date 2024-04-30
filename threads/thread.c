@@ -367,7 +367,7 @@ int thread_get_nice(void) {
 /** #Advanced Scheduler load_avg에 100을 곱해서 반환하는 함수 */
 int thread_get_load_avg(void) {
     enum intr_level old_level = intr_disable();
-    int load_avg_val = fp_to_int(mult_mixed(load_avg, 100));
+    int load_avg_val = fp_to_int_round(mult_mixed(load_avg, 100));
     intr_set_level(old_level);
 
     return load_avg_val;
@@ -378,7 +378,7 @@ int thread_get_recent_cpu(void) {
     thread_t *t = thread_current();
 
     enum intr_level old_level = intr_disable();
-    int recent_cpu = fp_to_int(mult_mixed(&t->recent_cpu, 100));
+    int recent_cpu = fp_to_int_round(mult_mixed(t->recent_cpu, 100));
     intr_set_level(old_level);
 
     return recent_cpu;
@@ -762,7 +762,7 @@ void mlfqs_priority(struct thread *t) {
     if (t == idle_thread)
         return;
 
-    t->priority = fp_to_int(int_to_fp(PRI_MAX) - div_mixed(t->recent_cpu, TIME_SLICE) - (t->niceness * 2));
+    t->priority = fp_to_int(add_mixed(div_mixed(t->recent_cpu, -4), PRI_MAX - t->niceness * 2));
 }
 
 /** #Advanced Scheduler Multi Level Feedback Queue Schedule Recent Cpu 계산하는 함수 */
@@ -775,7 +775,6 @@ void mlfqs_recent_cpu(struct thread *t) {
 
 /** #Advanced Scheduler Multi Level Feedback Queue Schedule Load Average 계산하는 함수 */
 void mlfqs_load_avg(void) {
-    // load_avg = (59/60) * load_avg + (1/60) * ready_threads
     int ready_threads;
 
     ready_threads = list_size(&ready_list);
@@ -799,11 +798,11 @@ void mlfqs_recalc_recent_cpu(void) {
     struct list_elem *e = list_begin(&all_list);
     thread_t *t = NULL;
 
-    while (e != list_end(&all_list)) {
+    while (e->next != NULL) {
         t = list_entry(e, thread_t, all_elem);
         mlfqs_recent_cpu(t);
 
-        e = list_next(&e);
+        e = list_next(e);
     }
 }
 
@@ -812,10 +811,10 @@ void mlfqs_recalc_priority(void) {
     struct list_elem *e = list_begin(&all_list);
     thread_t *t = NULL;
 
-    while (e != list_end(&all_list)) {
+    while (e->next != NULL) {
         t = list_entry(e, thread_t, all_elem);
         mlfqs_priority(t);
 
-        e = list_next(&e);
+        e = list_next(e);
     }
 }

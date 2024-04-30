@@ -120,19 +120,26 @@ static void timer_interrupt(struct intr_frame *args UNUSED) {
     thread_tick();
 
     /** #Advanced Scheduler mlfqs 스케줄러의 경우 */
-    if (thread_mlfqs){
-        if (!timer_ticks() % 4)
+    if (thread_mlfqs) {
+        mlfqs_increment();
+
+        if (!(ticks % 4)) {
+            if (ticks >= 13000)
+                printf("TICK\n");
+
             mlfqs_recalc_priority();
-        
-        if (!timer_ticks % 100){
-            mlfqs_load_avg();
-            mlfqs_recalc_recent_cpu();
+
+            if (!(ticks % TIMER_FREQ)) {
+                mlfqs_load_avg();
+                mlfqs_recalc_recent_cpu();
+            }
         }
     }
 
     /** #Alarm Clock 현재 활성화되어야 하는 thread가 있는지 탐색하여 활성화 */
-    if (get_next_tick_to_awake() <= ticks)
+    if (get_next_tick_to_awake() <= ticks) {
         thread_awake(ticks);
+    }
 }
 
 /* loop가 1개 초과시 true 반환 */

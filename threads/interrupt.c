@@ -311,8 +311,7 @@ void intr_handler(struct intr_frame *frame) {
         /* 핸들러는 없지만 이 인터럽트는 하드웨어 결함이나 하드웨어 경쟁 조건으로 인해
            허위로 트리거될 수 있습니다. 무시하세요. */
     } else {
-        /* No handler and not spurious.  Invoke the unexpected
-           interrupt handler. */
+        /* 핸들러도 없고 가짜도 아닙니다. 예상치 못한 호출 인터럽트 핸들러. */
         intr_dump_frame(frame);
         PANIC("Unexpected interrupt");
     }

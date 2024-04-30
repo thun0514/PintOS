@@ -1,14 +1,12 @@
 FAIL
-Some tick counts were missing or differed from those expected by more than 25.
-thread   actual <-> expected explanation
------- -------- --- -------- ----------------------------------------
-     0      301 <<< 672      Too small, by 346.
-     1      300 <<< 588      Too small, by 263.
-     2      300 <<< 492      Too small, by 167.
-     3      300 <<< 408      Too small, by 83.
-     4      300  =  316      
-     5      300 >>> 232      Too big, by 43.
-     6      301 >>> 152      Too big, by 124.
-     7      301 >>> 92       Too big, by 184.
-     8      301 >>> 40       Too big, by 236.
-     9      301 >>> 8        Too big, by 268.
+Kernel panic in run: PANIC at ../../threads/interrupt.c:316 in intr_handler(): Unexpected interrupt
+Call stack: 0x8004214c44 0x80042096be 0x8004209aa1 0x800420869d 0x800420e4a5 0x8004209649 0x8004209aa1 0x800420764d
+Translation of call stack:
+0x0000008004214c44: debug_panic (lib/kernel/debug.c:32)
+0x00000080042096be: intr_handler (threads/interrupt.c:320)
+0x0000008004209aa1: intr_entry (intr-stubs.o:?)
+0x000000800420869d: mlfqs_recalc_priority (threads/thread.c:818)
+0x000000800420e4a5: timer_interrupt (devices/timer.c:129)
+0x0000008004209649: intr_handler (threads/interrupt.c:309)
+0x0000008004209aa1: intr_entry (intr-stubs.o:?)
+0x000000800420764d: kernel_thread (threads/thread.c:429)

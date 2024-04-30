@@ -18,10 +18,10 @@ int sub_mixed(int x, int n);  /* FP와 int의 뺄셈(x-n) */
 int mult_fp(int x, int y);    /* FP의 곱셈 */
 int mult_mixed(int x, int y); /* FP와 int의 곱셈 */
 int div_fp(int x, int y);     /* FP의 나눗셈(x/y) */
-int div_mixed(int x, int n);  /* FP와 int 나눗셈(x/n) *
+int div_mixed(int x, int n);  /* FP와 int 나눗셈(x/n) */
  
  
- /* 함수 본체 */
+/* 함수 본체 */
 
 /* integer를 fixed point로 전환 */
 int int_to_fp(int n) {

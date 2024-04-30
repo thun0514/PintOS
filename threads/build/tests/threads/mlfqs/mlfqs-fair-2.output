@@ -11,19 +11,26 @@ Booting from Hard Disk..Kernel command line: -q -mlfqs run mlfqs-fair-2
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  130,867,200 loops/s.
+Calibrating timer...  209,510,400 loops/s.
 Boot complete.
 Executing 'mlfqs-fair-2':
 (mlfqs-fair-2) begin
 (mlfqs-fair-2) Starting 2 threads...
 (mlfqs-fair-2) Starting threads took 0 ticks.
 (mlfqs-fair-2) Sleeping 40 seconds to let threads run, please wait...
-(mlfqs-fair-2) Thread 0 received 1501 ticks.
-(mlfqs-fair-2) Thread 1 received 1500 ticks.
-(mlfqs-fair-2) end
-Execution of 'mlfqs-fair-2' complete.
-Timer: 4025 ticks
-Thread: 1000 idle ticks, 3025 kernel ticks, 0 user ticks
-Console: 674 characters output
-Keyboard: 0 keys pressed
-Powering off...
+Interrupt 0x0d (#GP General Protection Exception) at rip=800420830a
+ cr2=0000000000000000 error=               0
+rax cccccccccccccc4c rbx 0000000000000000 rcx 0000000000000000 rdx 0000008004236000
+rsp 0000008004235e60 rbp 0000008004235e70 rsi 00000000666666a7 rdi cccccccccccccc4c
+rip 000000800420830a r8 0000000000000000  r9 0000000000000000 r10 0000000000000000
+r11 0000000000000000 r12 0000000000000000 r13 0000000000000000 r14 0000000000000000
+r15 0000000000000000 rflags 00000082
+es: 0010 ds: 0010 cs: 0008 ss: 0010
+Kernel PANIC at ../../threads/interrupt.c:316 in intr_handler(): Unexpected interrupt
+Call stack: 0x8004214c44 0x80042096be 0x8004209aa1 0x800420869d 0x800420e4a5 0x8004209649 0x8004209aa1 0x800420764d.
+The `backtrace' program can make call stacks useful.
+Read "Backtraces" in the "Debugging Tools" chapter
+of the Pintos documentation for more information.
+Timer: 3524 ticks
+Thread: 500 idle ticks, 3024 kernel ticks, 0 user ticks
+Console: 1
