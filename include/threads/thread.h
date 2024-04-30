@@ -28,6 +28,11 @@ typedef int tid_t;
 #define PRI_DEFAULT 31 /* Default priority. */
 #define PRI_MAX 63     /* Highest priority. */
 
+/** #Advanced Scheduler 자료구조 추가 */
+#define NICE_DEFAULT 0
+#define RECENT_CPU_DEFAULT 0
+#define LOAD_AVG_DEFAULT 0
+
 /* A kernel thread or user process.
  *
  * Each thread structure is stored in its own 4 kB page.  The
@@ -91,16 +96,22 @@ typedef struct thread {
     enum thread_status status; /* Thread state. */
     char name[16];             /* Name (for debugging purposes). */
     int priority;              /* Priority. */
-    int64_t wakeup_tick;       /** #Alarm Clock 활성화 틱 */
-    
+
     /* Shared between thread.c and synch.c. */
     struct list_elem elem; /* List element. */
 
-    /** #Priority Donation 관련 항목 추가 */
-    int original_priority;
-    struct lock *wait_lock;
-    struct list donations;
-    struct list_elem donation_elem;
+    /** #Alarm Clock */
+    int64_t wakeup_tick; /* 활성화 틱 */
+
+    /** #Advanced Scheduler */
+    int niceness;   /* Niceness. */
+    int recent_cpu; /* 최근 CPU 점유 시간 */
+
+    /** #Priority Donation */
+    int original_priority;          /* 기존 Priority */
+    struct lock *wait_lock;         /* 대기중인 lock */
+    struct list donations;          /* Donation List. */
+    struct list_elem donation_elem; /* Donation Element. */
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
@@ -122,14 +133,12 @@ typedef struct thread {
 extern bool thread_mlfqs;
 
 /** #Alarm Clock 함수 */
-
 void thread_sleep(int64_t ticks);
 void thread_awake(int64_t ticks);
 void update_next_tick_to_awake(int64_t ticks);
 int64_t get_next_tick_to_awake(void);
 
 /** #Priority Scheduling 함수 */
-
 void test_max_priority(void);
 bool cmp_priority(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED);
 
@@ -137,6 +146,13 @@ bool cmp_priority(const struct list_elem *a, const struct list_elem *b, void *au
 void donate_priority(void);
 void remove_with_lock(struct lock *lock);
 void refresh_priority(void);
+
+/** #Advance Scheduler 함수 */
+void mlfqs_priority(struct thread *t);
+void mlfqs_recent_cpu(struct thread *t);
+void mlfqs_load_avg(void);
+void mlfqs_increment(void);
+void mlfqs_recalc(void);
 
 void thread_init(void);
 void thread_start(void);
