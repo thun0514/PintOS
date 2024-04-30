@@ -725,5 +725,14 @@ void mlfqs_priority(struct thread *t) {
     if (t == idle_thread)
         return;
 
-    t->priority = fp_to_int(add_mixed(div_mxied(t->recent_cpu, -4), PRI_MAX - t->niceness * 2));
+    t->priority = fp_to_int(int_to_fp(PRI_MAX) - div_mixed(t->recent_cpu, TIME_SLICE) - (t->niceness * 2));
+}
+
+/** #Advanced Scheduler 특정 스레드의 priority 를 계산하는 함수 */
+void mlfqs_recent_cput(struct thread *t) {
+    if (t == idle_thread)
+        return;
+
+    t->recent_cpu = add_mixed(mult_fp(div_fp(mult_mixed(load_avg, 2), add_mixed(mult_mixed(load_avg, 2), 1)), t->recent_cpu), t->niceness);
+}
 }
