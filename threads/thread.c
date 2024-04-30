@@ -720,7 +720,7 @@ void refresh_priority(void) {
         t->priority = max_thread->priority;
 }
 
-/** #Advanced Scheduler priority를 계산하는 함수*/
+/** #Advanced Scheduler Multi Level Feddback Queue Schedul Priority 계산하는 함수*/
 void mlfqs_priority(struct thread *t) {
     if (t == idle_thread)
         return;
@@ -728,11 +728,24 @@ void mlfqs_priority(struct thread *t) {
     t->priority = fp_to_int(int_to_fp(PRI_MAX) - div_mixed(t->recent_cpu, TIME_SLICE) - (t->niceness * 2));
 }
 
-/** #Advanced Scheduler 특정 스레드의 priority 를 계산하는 함수 */
+/** #Advanced Scheduler Multi Level Feddback Queue Schedule Recent Cpu 계산하는 함수 */
 void mlfqs_recent_cput(struct thread *t) {
     if (t == idle_thread)
         return;
 
     t->recent_cpu = add_mixed(mult_fp(div_fp(mult_mixed(load_avg, 2), add_mixed(mult_mixed(load_avg, 2), 1)), t->recent_cpu), t->niceness);
 }
+
+/** #Advanced Scheduler Multi Level Feddback Queue Schedule Load Average 계산하는 함수 */
+void mlfqs_load_avg(void) {
+    // load_avg = (59/60) * load_avg + (1/60) * ready_threads
+    int ready_threads;
+
+    ready_threads = list_size(&ready_list);
+
+    if (thread_current() != idle_thread)
+        ready_threads++;
+
+    load_avg = add_fp(mult_fp(div_fp(int_to_fp(59), int_to_fp(60)), load_avg), mult_mixed(div_fp(int_to_fp(1), int_to_fp(60)), ready_threads));
 }
+
