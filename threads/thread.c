@@ -749,3 +749,10 @@ void mlfqs_load_avg(void) {
     load_avg = add_fp(mult_fp(div_fp(int_to_fp(59), int_to_fp(60)), load_avg), mult_mixed(div_fp(int_to_fp(1), int_to_fp(60)), ready_threads));
 }
 
+/** #Advanced Scheduler Multi Level Feddback Queue Schedule Load Average 계산하는 함수 */
+void mlfqs_increment(void) {
+    if (thread_current() == idle_thread)
+        return;
+        
+    thread_current()->recent_cpu = add_mixed(thread_current()->recent_cpu, 1);
+}
