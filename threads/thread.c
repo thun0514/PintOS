@@ -701,7 +701,7 @@ void remove_with_lock(struct lock *lock) {
     }
 }
 
-/** 쓰레드의 우선순위가 변경되었을 때, donation을 고려하여 우선순위를 다시 결정하는 함수 */
+/** #Priority Donation 쓰레드의 우선순위가 변경되었을 때, donation을 고려하여 우선순위를 다시 결정하는 함수 */
 void refresh_priority(void) {
     /* 현재 쓰레드의 우선순위를 기부 받기 전의 우선순위로 변경.
     현재 쓰레드의 waiters 리스트에서 가장 높은 우선순위를 현재 쓰레드의 우선순위와 비교 후 우선순위 결정 */
@@ -718,4 +718,12 @@ void refresh_priority(void) {
 
     if (t->priority < max_thread->priority)
         t->priority = max_thread->priority;
+}
+
+/** #Advanced Scheduler priority를 계산하는 함수*/
+void mlfqs_priority(struct thread *t) {
+    if (t == idle_thread)
+        return;
+
+    t->priority = fp_to_int(add_mixed(div_mxied(t->recent_cpu, -4), PRI_MAX - t->niceness * 2));
 }
