@@ -411,6 +411,10 @@ static void init_thread(struct thread *t, const char *name, int priority) {
     t->wait_lock = NULL;
 
     t->magic = THREAD_MAGIC;
+
+    /** #Advanced Scheduler */
+    t->niceness = NICE_DEFAULT;
+    t->recent_cpu = RECENT_CPU_DEFAULT;
 }
 
 /* Chooses and returns the next thread to be scheduled.  Should
