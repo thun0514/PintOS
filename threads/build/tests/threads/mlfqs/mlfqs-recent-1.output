@@ -11,7 +11,7 @@ Booting from Hard Disk..Kernel command line: -q -mlfqs run mlfqs-recent-1
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  209,510,400 loops/s.
+Calibrating timer...  215,859,200 loops/s.
 Boot complete.
 Executing 'mlfqs-recent-1':
 (mlfqs-recent-1) begin
@@ -109,7 +109,7 @@ Executing 'mlfqs-recent-1':
 (mlfqs-recent-1) end
 Execution of 'mlfqs-recent-1' complete.
 Timer: 19002 ticks
-Thread: 979 idle ticks, 18023 kernel ticks, 0 user ticks
+Thread: 970 idle ticks, 18032 kernel ticks, 0 user ticks
 Console: 7290 characters output
 Keyboard: 0 keys pressed
 Powering off...
