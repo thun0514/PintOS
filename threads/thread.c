@@ -443,22 +443,13 @@ static void init_thread(struct thread *t, const char *name, int priority) {
 
     /** #Advanced Scheduler */
     if (thread_mlfqs) {
-        if (initial_thread == t) {
-            t->niceness = 0;
-            t->recent_cpu = 0;
-        } else {
-            t->niceness = thread_current()->niceness;
-            t->recent_cpu = thread_current()->recent_cpu;
-        }
-
         mlfqs_priority(t);
         list_push_back(&all_list, &t->all_elem);
-
     } else {
         /** #Priority Donation 자료구조 초기화 */
         t->priority = priority;
     }
-    
+
     t->wait_lock = NULL;
     list_init(&t->donations);
 
