@@ -103,15 +103,16 @@ typedef struct thread {
     /** #Alarm Clock */
     int64_t wakeup_tick; /* 활성화 틱 */
 
-    /** #Advanced Scheduler */
-    int niceness;   /* Niceness. */
-    int recent_cpu; /* 최근 CPU 점유 시간 */
-
     /** #Priority Donation */
     int original_priority;          /* 기존 Priority */
     struct lock *wait_lock;         /* 대기중인 lock */
     struct list donations;          /* Donation List. */
     struct list_elem donation_elem; /* Donation Element. */
+
+    /** #Advanced Scheduler */
+    int niceness;              /* Niceness. */
+    int recent_cpu;            /* 최근 CPU 점유 시간 */
+    struct list_elem all_elem; /* 살아있는 모든 Thread 연결 */
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
