@@ -36,6 +36,9 @@ static int64_t next_tick_to_awake;
    that are ready to run but not actually running. */
 static struct list ready_list;
 
+/** #Advanced Scheduler */
+static struct list all_list;
+
 /* Idle thread. */
 static struct thread *idle_thread;
 
@@ -118,6 +121,9 @@ void thread_init(void) {
 
     /** #Alarm Clock sleep list 초기화 */
     list_init(&sleep_list);
+
+    /** #Advanced Scheduler all list 초기화 */
+    list_init(&all_list);
 
     /* Set up a thread structure for the running thread. */
     initial_thread = running_thread();
@@ -318,6 +324,11 @@ void thread_yield(void) {
 
 /* Sets the current thread's priority to NEW_PRIORITY. */
 void thread_set_priority(int new_priority) {
+    
+    /** #Advanced Scheduler mlfqs 스케줄러 일때 우선순위를 임의로 변경할수 없도록 수정 */
+    if (thread_mlfqs)
+        return;
+
     /** #Priority Donation prioirity 대신 original priority 사용 */
     thread_current()->original_priority = new_priority;
 
@@ -720,7 +731,7 @@ void refresh_priority(void) {
         t->priority = max_thread->priority;
 }
 
-/** #Advanced Scheduler Multi Level Feddback Queue Schedul Priority 계산하는 함수*/
+/** #Advanced Scheduler Multi Level Feedback Queue Schedul Priority 계산하는 함수*/
 void mlfqs_priority(struct thread *t) {
     if (t == idle_thread)
         return;
@@ -728,15 +739,15 @@ void mlfqs_priority(struct thread *t) {
     t->priority = fp_to_int(int_to_fp(PRI_MAX) - div_mixed(t->recent_cpu, TIME_SLICE) - (t->niceness * 2));
 }
 
-/** #Advanced Scheduler Multi Level Feddback Queue Schedule Recent Cpu 계산하는 함수 */
-void mlfqs_recent_cput(struct thread *t) {
+/** #Advanced Scheduler Multi Level Feedback Queue Schedule Recent Cpu 계산하는 함수 */
+void mlfqs_recent_cpu(struct thread *t) {
     if (t == idle_thread)
         return;
 
     t->recent_cpu = add_mixed(mult_fp(div_fp(mult_mixed(load_avg, 2), add_mixed(mult_mixed(load_avg, 2), 1)), t->recent_cpu), t->niceness);
 }
 
-/** #Advanced Scheduler Multi Level Feddback Queue Schedule Load Average 계산하는 함수 */
+/** #Advanced Scheduler Multi Level Feedback Queue Schedule Load Average 계산하는 함수 */
 void mlfqs_load_avg(void) {
     // load_avg = (59/60) * load_avg + (1/60) * ready_threads
     int ready_threads;
@@ -749,10 +760,24 @@ void mlfqs_load_avg(void) {
     load_avg = add_fp(mult_fp(div_fp(int_to_fp(59), int_to_fp(60)), load_avg), mult_mixed(div_fp(int_to_fp(1), int_to_fp(60)), ready_threads));
 }
 
-/** #Advanced Scheduler Multi Level Feddback Queue Schedule Load Average 계산하는 함수 */
+/** #Advanced Scheduler Multi Level Feedback Queue Schedule Recent CPU에 1을 더하는 함수 */
 void mlfqs_increment(void) {
     if (thread_current() == idle_thread)
         return;
-        
+
     thread_current()->recent_cpu = add_mixed(thread_current()->recent_cpu, 1);
+}
+
+/** #Advanced Scheduler Multi Level Feedback Queue Schedule 모든 Priority & Recent CPU 재계산 */
+void mlfqs_recalc(void) {
+    struct list_elem *e = list_begin(&all_list);
+    thread_t *t = NULL;
+
+    while (e != list_end(&all_list)) {
+        t = list_entry(e, thread_t, all_elem);
+        mlfqs_recent_cpu(t);
+        mlfqs_priority(t);
+
+        e = list_next(&e);
+    }
 }
