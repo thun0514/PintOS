@@ -4,8 +4,8 @@
 #define INT_MIN (-(1 << 31))
 
 /*
- * 부동 소수점을 위한 산술 연산
- * n: int ; x, y: 부동 소수점 숫자 ; F: 17.14로 표현한 1
+ * 고정 소수점을 위한 산술 연산
+ * n: int ; x, y: 고정 소수점 숫자 ; F: 17.14로 표현한 1
  */
 
 int int_to_fp(int n);         /* integer를 fixed point로 전환 */
