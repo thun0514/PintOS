@@ -484,102 +484,100 @@ static struct thread *next_thread_to_run(void) {
         return list_entry(list_pop_front(&ready_list), struct thread, elem);
 }
 
-/* Use iretq to launch the thread */
+/* Use iretq to launch the thread *** 실제로 context switching을 하는 함수 *** */
 void do_iret(struct intr_frame *tf) {
-    __asm __volatile(
-        "movq %0, %%rsp\n"
-        "movq 0(%%rsp),%%r15\n"
-        "movq 8(%%rsp),%%r14\n"
-        "movq 16(%%rsp),%%r13\n"
-        "movq 24(%%rsp),%%r12\n"
+    __asm __volatile(             // 입력한 그대로 사용
+        "movq %0, %%rsp\n"        // 인자 *tf의 주소를 Register Stack Pointer RSP에 저장
+        "movq 0(%%rsp),%%r15\n"   // rsp위치의 값(stack 시작)을 레지스터 r15에 저장
+        "movq 8(%%rsp),%%r14\n"   // rsp+8위치의 값을 레지스터 r14에 저장
+        "movq 16(%%rsp),%%r13\n"  // rsp+16위치의 값을 레지스터 r16에 저장
+        "movq 24(%%rsp),%%r12\n"  // rsp+24 위치의 값을 레지스터 r12에 저장
         "movq 32(%%rsp),%%r11\n"
         "movq 40(%%rsp),%%r10\n"
         "movq 48(%%rsp),%%r9\n"
         "movq 56(%%rsp),%%r8\n"
-        "movq 64(%%rsp),%%rsi\n"
+        "movq 64(%%rsp),%%rsi\n"  // ...
         "movq 72(%%rsp),%%rdi\n"
         "movq 80(%%rsp),%%rbp\n"
         "movq 88(%%rsp),%%rdx\n"
-        "movq 96(%%rsp),%%rcx\n"
-        "movq 104(%%rsp),%%rbx\n"
-        "movq 112(%%rsp),%%rax\n"
-        "addq $120,%%rsp\n"
-        "movw 8(%%rsp),%%ds\n"
-        "movw (%%rsp),%%es\n"
-        "addq $32, %%rsp\n"
-        "iretq"
-        :
-        : "g"((uint64_t)tf)
+        "movq 96(%%rsp),%%rcx\n"   // rsp+96 위치의 값을 레지스터 rcx에 저장
+        "movq 104(%%rsp),%%rbx\n"  // rsp+104 위치의 값을 레지스터 rbx에 저장
+        "movq 112(%%rsp),%%rax\n"  // rsp+112 위치의 값을 레지스터 rax에 저장
+        "addq $120,%%rsp\n"        // rsp 위치를 정수 레지스터 다음으로 이동-> rsp->es
+        "movw 8(%%rsp),%%ds\n"     // rsp+8위치의 값을 레지스터 ds(data segment)에 저장
+        "movw (%%rsp),%%es\n"      // rsp 위치의 값을 레지스터 es(extra segment)에 저장
+        "addq $32, %%rsp\n"        // rsp 위치를 rsp+32로 이동. rsp->rip
+        "iretq"                    // rip 이하(cs, eflags, rsp, ss) 인터럽트 프레임에서 CPU로 복원.
+        :                          // 인터럽트 프레임의 rip 값을 복원함으로서 기존에 수행하던 스레드의 다음 명령 실행
+        : "g"((uint64_t)tf)        // g=인자. 0번 인자로 tf를 받음
         : "memory");
 }
 
-/* Switching the thread by activating the new thread's page
-   tables, and, if the previous thread is dying, destroying it.
+/* 새 스레드의 페이지 테이블을 활성화하여 스레드를 전환하고, 이전 스레드가 죽어 있으면 이를 삭제합니다.
 
-   At this function's invocation, we just switched from thread
-   PREV, the new thread is already running, and interrupts are
-   still disabled.
+   이 함수를 호출할 때 방금 PREV 스레드에서 전환했으며 새 스레드가 이미 실행 중이고 인터럽트는 여전히
+   비활성화되어 있습니다.
 
-   It's not safe to call printf() until the thread switch is
-   complete.  In practice that means that printf()s should be
-   added at the end of the function. */
+   스레드 전환이 완료될 때까지 printf()를 호출하는 것은 안전하지 않습니다. 실제로 이는 printf()를 함수
+   끝에 추가해야 함을 의미합니다. */
 static void thread_launch(struct thread *th) {
     uint64_t tf_cur = (uint64_t)&running_thread()->tf;
     uint64_t tf = (uint64_t)&th->tf;
     ASSERT(intr_get_level() == INTR_OFF);
 
-    /* The main switching logic.
-     * We first restore the whole execution context into the intr_frame
-     * and then switching to the next thread by calling do_iret.
-     * Note that, we SHOULD NOT use any stack from here
-     * until switching is done. */
+    /* 주요 스위칭 로직.
+     * 먼저 전체 실행 컨텍스트를 intr_frame으로 복원한 후 do_iret를 호출하여 다음 스레드로 전환합니다.
+     * 전환이 완료될 때까지 여기에서 스택을 사용해서는 안 됩니다.*/
     __asm __volatile(
         /* Store registers that will be used. */
-        "push %%rax\n"
-        "push %%rbx\n"
-        "push %%rcx\n"
+        "push %%rax\n"  // stack에 rax위치의 값 저장 ... 이 안에 어떤 정보가 들어있었는가?
+        "push %%rbx\n"  // stack에 rbx위치의 값 저장
+        "push %%rcx\n"  // stack에 rcs위치의 값 저장
+
         /* Fetch input once */
-        "movq %0, %%rax\n"
-        "movq %1, %%rcx\n"
-        "movq %%r15, 0(%%rax)\n"
-        "movq %%r14, 8(%%rax)\n"
-        "movq %%r13, 16(%%rax)\n"
-        "movq %%r12, 24(%%rax)\n"
-        "movq %%r11, 32(%%rax)\n"
-        "movq %%r10, 40(%%rax)\n"
-        "movq %%r9, 48(%%rax)\n"
-        "movq %%r8, 56(%%rax)\n"
-        "movq %%rsi, 64(%%rax)\n"
-        "movq %%rdi, 72(%%rax)\n"
-        "movq %%rbp, 80(%%rax)\n"
-        "movq %%rdx, 88(%%rax)\n"
-        "pop %%rbx\n"  // Saved rcx
-        "movq %%rbx, 96(%%rax)\n"
-        "pop %%rbx\n"  // Saved rbx
-        "movq %%rbx, 104(%%rax)\n"
-        "pop %%rbx\n"  // Saved rax
-        "movq %%rbx, 112(%%rax)\n"
-        "addq $120, %%rax\n"
-        "movw %%es, (%%rax)\n"
-        "movw %%ds, 8(%%rax)\n"
-        "addq $32, %%rax\n"
-        "call __next\n"  // read the current rip.
-        "__next:\n"
-        "pop %%rbx\n"
-        "addq $(out_iret -  __next), %%rbx\n"
-        "movq %%rbx, 0(%%rax)\n"  // rip
-        "movw %%cs, 8(%%rax)\n"   // cs
-        "pushfq\n"
-        "popq %%rbx\n"
-        "mov %%rbx, 16(%%rax)\n"  // eflags
-        "mov %%rsp, 24(%%rax)\n"  // rsp
-        "movw %%ss, 32(%%rax)\n"
-        "mov %%rcx, %%rdi\n"
-        "call do_iret\n"
-        "out_iret:\n"
-        :
-        : "g"(tf_cur), "g"(tf)
-        : "memory");
+        "movq %0, %%rax\n"          // 0번 인자의 주소를 레지스터 rax에 저장
+        "movq %1, %%rcx\n"          // 1번 인자의 주소를 레지스터 rcx에 저장
+        "movq %%r15, 0(%%rax)\n"    // 레지스터 r15의 값을 rax+0 위치에 저장
+        "movq %%r14, 8(%%rax)\n"    // 레지스터 r14의 값을 rax+8 위치에 저장
+        "movq %%r13, 16(%%rax)\n"   // 레지스터 r13의 값을 rax+16 위치에 저장
+        "movq %%r12, 24(%%rax)\n"   // 레지스터 r12의 값을 rax+24 위치에 저장
+        "movq %%r11, 32(%%rax)\n"   // 레지스터 r11의 값을 rax+32 위치에 저장
+        "movq %%r10, 40(%%rax)\n"   // 레지스터 r10의 값을 rax+40 위치에 저장
+        "movq %%r9, 48(%%rax)\n"    // 레지스터 r9의 값을 rax+48 위치에 저장
+        "movq %%r8, 56(%%rax)\n"    // 레지스터 r8의 값을 rax+56 위치에 저장
+        "movq %%rsi, 64(%%rax)\n"   // 레지스터 rsi의 값을 rax+64 위치에 저장
+        "movq %%rdi, 72(%%rax)\n"   // 레지스터 rdi의 값을 rax+72 위치에 저장
+        "movq %%rbp, 80(%%rax)\n"   // 레지스터 rbp의 값을 rax+80 위치에 저장
+        "movq %%rdx, 88(%%rax)\n"   // 레지스터 rdx의 값을 rax+88 위치에 저장
+        "pop %%rbx\n"               // Stack에 저장된 rcx의 값을 rbx 위치에 복원
+        "movq %%rbx, 96(%%rax)\n"   // 레지스터 rbx의 값을 rax+96 위치에 저장
+        "pop %%rbx\n"               // Stack에 저장된 rbx의 값을 rbx 위치에 복원
+        "movq %%rbx, 104(%%rax)\n"  // 레지스터 rbx의 값을 rax+104 위치에 저장
+        "pop %%rbx\n"               // Stack에 저장된 rax의 값을 rbx 위치에 복원
+        "movq %%rbx, 112(%%rax)\n"  // 레지스터 rbx의 값을 rax+112 위치에 저장
+        "addq $120, %%rax\n"        // 레지스터 rax의 위치를 정수 레지스터 다음으로 이동 rax->es
+        "movw %%es, (%%rax)\n"      // es값을 rax의 위치(es)에 저장
+        "movw %%ds, 8(%%rax)\n"     // ds값을 rax+8의 위치(ds)에 저장
+        "addq $32, %%rax\n"         // 레지스터 rax를 rip 위치로 이동
+
+        "call __next\n"                        // "__next"로 레이블된 위치로 이동
+        "__next:\n"                            // "__next" 레이블: 다음으로 이동할 위치
+        "pop %%rbx\n"                          // stack에 저장한 내용을 rbx에 복원
+        "addq $(out_iret -  __next), %%rbx\n"  // rbx의 위치에 (out_iret - __next) 값을 더한다 ... 왜?
+        "movq %%rbx, 0(%%rax)\n"               // rbx(rip)의 값을 rax+0에 저장
+        "movw %%cs, 8(%%rax)\n"                // 레지스터 cs의 값을 rax+8에 저장
+        "pushfq\n"                             // 현재까지의 플래그 레지스터 내용을 Stack에 저장
+
+        "popq %%rbx\n"            // Stack에 저장된 내용을 rbx에 복원
+        "mov %%rbx, 16(%%rax)\n"  // 레지스터 rbx(eflags)의 값을 rax+16에 저장
+        "mov %%rsp, 24(%%rax)\n"  // 레지스터 rsp의 값을 rax+24에 저장
+        "movw %%ss, 32(%%rax)\n"  // 레지스터 ss의 값을 rax+32에 저장
+        "mov %%rcx, %%rdi\n"      // 레지스터 rcx의 값을 레지스터 레지스터 rdi로 복사
+        "call do_iret\n"          // do_iret 함수 호출
+        "out_iret:\n"             // "out_iret" 레이블: 다음으로 이동할 위치
+        :                         // output operands
+        : "g"(tf_cur), "g"(tf)    // input operands
+        : "memory");              // list of clobbered registers -> memory의 register들이 asm 실행 전/후 갱신되어야 함
 }
 
 /* Schedules a new process. At entry, interrupts must be off.
