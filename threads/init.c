@@ -70,19 +70,18 @@ int main(void) {
     uint64_t mem_end;
     char **argv;
 
-    /* Clear BSS and get machine's RAM size. */
+    /* BSS를 지우고 시스템의 RAM 크기를 가져옵니다. */
     bss_init();
 
-    /* Break command line into arguments and parse options. */
+    /* 명령줄을 인수로 나누고 옵션을 구문 분석합니다. */
     argv = read_command_line();
     argv = parse_options(argv);
 
-    /* Initialize ourselves as a thread so we can use locks,
-       then enable console locking. */
+    /* 잠금을 사용할 수 있도록 스레드로 초기화한 다음 콘솔 잠금을 활성화합니다. */
     thread_init();
     console_init();
 
-    /* Initialize memory system. */
+    /* 메모리 시스템을 초기화합니다. */
     mem_end = palloc_init();
     malloc_init();
     paging_init(mem_end);
@@ -92,7 +91,7 @@ int main(void) {
     gdt_init();
 #endif
 
-    /* Initialize interrupt handlers. */
+    /* 인터럽트 핸들러를 초기화합니다. */
     intr_init();
     timer_init();
     kbd_init();
@@ -101,7 +100,7 @@ int main(void) {
     exception_init();
     syscall_init();
 #endif
-    /* Start thread scheduler and enable interrupts. */
+    /* 스레드 스케줄러를 시작하고 인터럽트를 활성화합니다. */
     thread_start();
     serial_init_queue();
     timer_calibrate();
@@ -118,10 +117,10 @@ int main(void) {
 
     printf("Boot complete.\n");
 
-    /* Run actions specified on kernel command line. */
+    /* 커널 명령줄에 지정된 작업을 실행합니다. */
     run_actions(argv);
 
-    /* Finish up. */
+    /* 마무리. */
     if (power_off_when_done)
         power_off();
     thread_exit();
@@ -129,19 +128,19 @@ int main(void) {
 
 /* Clear BSS */
 static void bss_init(void) {
-    /* The "BSS" is a segment that should be initialized to zeros.
-       It isn't actually stored on disk or zeroed by the kernel
-       loader, so we have to zero it ourselves.
+    /* "BSS"는 0으로 초기화되어야 하는 세그먼트입니다.
+       실제로 디스크에 저장되거나 커널 로더에 의해 0으로 설정되지 않으므로
+       우리가 직접 0으로 설정해야 합니다.
 
-       The start and end of the BSS segment is recorded by the
-       linker as _start_bss and _end_bss.  See kernel.lds. */
+       BSS 세그먼트의 시작과 끝은 링커에 의해 _start_bss 및 _end_bss로
+       기록됩니다. kernel.lds를 참조하십시오. */
     extern char _start_bss, _end_bss;
     memset(&_start_bss, 0, &_end_bss - &_start_bss);
 }
 
-/* Populates the page table with the kernel virtual mapping,
- * and then sets up the CPU to use the new page directory.
- * Points base_pml4 to the pml4 it creates. */
+/* 커널 가상 매핑으로 페이지 테이블을 채운 다음 새 페이지 디렉터리를 사용하
+ * 도록 CPU를 설정합니다.
+ * base_pml4부터 pml4를 가리킵니다. */
 static void paging_init(uint64_t mem_end) {
     uint64_t *pml4, *pte;
     int perm;
@@ -165,8 +164,7 @@ static void paging_init(uint64_t mem_end) {
     pml4_activate(0);
 }
 
-/* Breaks the kernel command line into words and returns them as
-   an argv-like array. */
+/* 커널 명령줄을 단어로 나누고 이를 argv와 같은 배열로 반환합니다. */
 static char **read_command_line(void) {
     static char *argv[LOADER_ARGS_LEN / 2 + 1];
     char *p, *end;

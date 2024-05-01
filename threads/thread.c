@@ -92,19 +92,16 @@ static tid_t allocate_tid(void);
 // setup temporal gdt first.
 static uint64_t gdt[3] = {0, 0x00af9a000000ffff, 0x00cf92000000ffff};
 
-/* Initializes the threading system by transforming the code
-   that's currently running into a thread.  This can't work in
-   general and it is possible in this case only because loader.S
-   was careful to put the bottom of the stack at a page boundary.
+/* 현재 실행 중인 코드를 스레드로 변환하여 스레딩 시스템을 초기화합니다.
+   이것은 일반적으로 작동하지 않으며 이 경우에만 가능합니다. 왜냐하면 loader.S가
+   스택의 맨 아래를 페이지 경계에 두는 데 주의를 기울였기 때문입니다.
 
-   Also initializes the run queue and the tid lock.
+   또한 실행 큐와 tid 잠금을 초기화합니다..
 
-   After calling this function, be sure to initialize the page
-   allocator before trying to create any threads with
-   thread_create().
+   이 함수를 호출한 후 thread_create()를 사용하여 스레드를 생성하기 전에
+   page allocator를 초기화해야 합니다.
 
-   It is not safe to call thread_current() until this function
-   finishes. */
+   이 함수가 완료될 때까지 thread_current()를 호출하는 것은 안전하지 않습니다.*/
 void thread_init(void) {
     ASSERT(intr_get_level() == INTR_OFF);
 
@@ -137,8 +134,8 @@ void thread_init(void) {
     initial_thread->tid = allocate_tid();
 }
 
-/* Starts preemptive thread scheduling by enabling interrupts.
-   Also creates the idle thread. */
+/* 인터럽트를 활성화하여 선점형 스레드 스케줄링을 시작합니다.
+   또한 idle 스레드를 생성합니다. */
 void thread_start(void) {
     /* Create the idle thread. */
     struct semaphore idle_started;
@@ -148,10 +145,10 @@ void thread_start(void) {
     /** #Advanced Scheduler */
     load_avg = LOAD_AVG_DEFAULT;
 
-    /* Start preemptive thread scheduling. */
+    /* 선점형 스레드 스케줄링 시작. */
     intr_enable();
 
-    /* Wait for the idle thread to initialize idle_thread. */
+    /* 유휴 스레드가 유휴 스레드를 초기화할 때까지 기다립니다. */
     sema_down(&idle_started);
 }
 
@@ -220,9 +217,6 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
     t->tf.ss = SEL_KDSEG;
     t->tf.cs = SEL_KCSEG;
     t->tf.eflags = FLAG_IF;
-
-    /** #Advanced Scheduler all_list에 element 추가 */
-    // list_push_back(&all_list, &t->all_elem);
 
     /* Add to run queue. */
     thread_unblock(t);
@@ -377,7 +371,7 @@ int thread_get_nice(void) {
 /** #Advanced Scheduler load_avg에 100을 곱해서 반환하는 함수 */
 int thread_get_load_avg(void) {
     enum intr_level old_level = intr_disable();
-    int load_avg_val = fp_to_int_round(mult_mixed(load_avg, 100));
+    int load_avg_val = fp_to_int_round(mult_mixed(load_avg, 100));  // 출력시 소수 2번째 자리까지 출력하기 위함
     intr_set_level(old_level);
 
     return load_avg_val;
@@ -388,7 +382,7 @@ int thread_get_recent_cpu(void) {
     thread_t *t = thread_current();
 
     enum intr_level old_level = intr_disable();
-    int recent_cpu = fp_to_int_round(mult_mixed(t->recent_cpu, 100));
+    int recent_cpu = fp_to_int_round(mult_mixed(t->recent_cpu, 100));  // 출력시 소수 2번째 자리까지 출력하기 위함
     intr_set_level(old_level);
 
     return recent_cpu;
@@ -502,13 +496,15 @@ void do_iret(struct intr_frame *tf) {
         "movq 96(%%rsp),%%rcx\n"   // rsp+96 위치의 값을 레지스터 rcx에 저장
         "movq 104(%%rsp),%%rbx\n"  // rsp+104 위치의 값을 레지스터 rbx에 저장
         "movq 112(%%rsp),%%rax\n"  // rsp+112 위치의 값을 레지스터 rax에 저장
-        "addq $120,%%rsp\n"        // rsp 위치를 정수 레지스터 다음으로 이동-> rsp->es
-        "movw 8(%%rsp),%%ds\n"     // rsp+8위치의 값을 레지스터 ds(data segment)에 저장
-        "movw (%%rsp),%%es\n"      // rsp 위치의 값을 레지스터 es(extra segment)에 저장
-        "addq $32, %%rsp\n"        // rsp 위치를 rsp+32로 이동. rsp->rip
-        "iretq"                    // rip 이하(cs, eflags, rsp, ss) 인터럽트 프레임에서 CPU로 복원.
-        :                          // 인터럽트 프레임의 rip 값을 복원함으로서 기존에 수행하던 스레드의 다음 명령 실행
-        : "g"((uint64_t)tf)        // g=인자. 0번 인자로 tf를 받음
+
+        "addq $120,%%rsp\n"     // rsp 위치를 정수 레지스터 다음으로 이동-> rsp->es
+        "movw 8(%%rsp),%%ds\n"  // rsp+8위치의 값을 레지스터 ds(data segment)에 저장
+        "movw (%%rsp),%%es\n"   // rsp 위치의 값을 레지스터 es(extra segment)에 저장
+
+        "addq $32, %%rsp\n"  // rsp 위치를 rsp+32로 이동. rsp->rip
+        "iretq"              // rip 이하(cs, eflags, rsp, ss) 인터럽트 프레임에서 CPU로 복원. (직접 ACCESS 불가능)
+        :                    // 인터럽트 프레임의 rip 값을 복원함으로서 기존에 수행하던 스레드의 다음 명령 실행 ... ?
+        : "g"((uint64_t)tf)  // g=인자. 0번 인자로 tf를 받음
         : "memory");
 }
 
@@ -528,12 +524,12 @@ static void thread_launch(struct thread *th) {
      * 먼저 전체 실행 컨텍스트를 intr_frame으로 복원한 후 do_iret를 호출하여 다음 스레드로 전환합니다.
      * 전환이 완료될 때까지 여기에서 스택을 사용해서는 안 됩니다.*/
     __asm __volatile(
-        /* Store registers that will be used. */
-        "push %%rax\n"  // stack에 rax위치의 값 저장 ... 이 안에 어떤 정보가 들어있었는가?
-        "push %%rbx\n"  // stack에 rbx위치의 값 저장
-        "push %%rcx\n"  // stack에 rcs위치의 값 저장
+        /* 레지스터 정보를 Stack에 임시로 저장. */
+        "push %%rax\n"  // Stack에 rax위치의 값 저장
+        "push %%rbx\n"  // Stack에 rbx위치의 값 저장
+        "push %%rcx\n"  // Stack에 rcs위치의 값 저장
 
-        /* Fetch input once */
+        /* 현재 CPU의 레지스터 -> 구조체로 데이터 이동 (백업) */
         "movq %0, %%rax\n"          // 0번 인자의 주소를 레지스터 rax에 저장
         "movq %1, %%rcx\n"          // 1번 인자의 주소를 레지스터 rcx에 저장
         "movq %%r15, 0(%%rax)\n"    // 레지스터 r15의 값을 rax+0 위치에 저장
@@ -559,24 +555,28 @@ static void thread_launch(struct thread *th) {
         "movw %%ds, 8(%%rax)\n"     // ds값을 rax+8의 위치(ds)에 저장
         "addq $32, %%rax\n"         // 레지스터 rax를 rip 위치로 이동
 
-        "call __next\n"                        // "__next"로 레이블된 위치로 이동
-        "__next:\n"                            // "__next" 레이블: 다음으로 이동할 위치
-        "pop %%rbx\n"                          // stack에 저장한 내용을 rbx에 복원
-        "addq $(out_iret -  __next), %%rbx\n"  // rbx의 위치에 (out_iret - __next) 값을 더한다 ... 왜?
-        "movq %%rbx, 0(%%rax)\n"               // rbx(rip)의 값을 rax+0에 저장
-        "movw %%cs, 8(%%rax)\n"                // 레지스터 cs의 값을 rax+8에 저장
-        "pushfq\n"                             // 현재까지의 플래그 레지스터 내용을 Stack에 저장
+        "call __next\n"  // "__next"로 레이블된 위치를 스택에 콜
 
-        "popq %%rbx\n"            // Stack에 저장된 내용을 rbx에 복원
-        "mov %%rbx, 16(%%rax)\n"  // 레지스터 rbx(eflags)의 값을 rax+16에 저장
-        "mov %%rsp, 24(%%rax)\n"  // 레지스터 rsp의 값을 rax+24에 저장
-        "movw %%ss, 32(%%rax)\n"  // 레지스터 ss의 값을 rax+32에 저장
-        "mov %%rcx, %%rdi\n"      // 레지스터 rcx의 값을 레지스터 레지스터 rdi로 복사
-        "call do_iret\n"          // do_iret 함수 호출
-        "out_iret:\n"             // "out_iret" 레이블: 다음으로 이동할 위치
-        :                         // output operands
-        : "g"(tf_cur), "g"(tf)    // input operands
-        : "memory");              // list of clobbered registers -> memory의 register들이 asm 실행 전/후 갱신되어야 함
+        "__next:\n"  // "__next" 레이블: 다음으로 이동할 레이블
+
+        "pop %%rbx\n"                          // Stack에 저장한 위치를 rbx에 복원
+        "addq $(out_iret -  __next), %%rbx\n"  // rbx의 위치를 (out_iret - __next를 미리계산)의 값으로 이동한다 -> 다시 이 스레드를 실행 시 out_iret부터 재개
+        "movq %%rbx, 0(%%rax)\n"               // rbx의 위치를 rax+0(rip)에 저장
+        "movw %%cs, 8(%%rax)\n"                // 레지스터 cs의 값을 rax+8(cs)에 저장
+
+        "pushfq\n"                // 현재의 플래그 레지스터 내용을 Stack에 저장 (직접 ACCESS 불가)
+        "popq %%rbx\n"            // Stack에 저장한 내용을 rbx에 복원
+        "mov %%rbx, 16(%%rax)\n"  // 레지스터 rbx(eflags)의 값을 rax+16(eflags)에 저장
+        "mov %%rsp, 24(%%rax)\n"  // 레지스터 rsp의 값을 rax+24(rsp)에 저장
+        "movw %%ss, 32(%%rax)\n"  // 레지스터 ss의 값을 rax+32(rax)에 저장
+
+        "mov %%rcx, %%rdi\n"  // 레지스터 rcx의 값(인자 1번 tf의 주소)을 레지스터 레지스터 rdi로 복사
+        "call do_iret\n"      // rdi를 인자로 받아 do_iret 함수 호출
+
+        "out_iret:\n"           // "out_iret" 레이블: 다음으로 이동할 레이블
+        :                       // output operands
+        : "g"(tf_cur), "g"(tf)  // input operands
+        : "memory");            // list of clobbered registers -> memory의 register들이 asm 실행 전/후 갱신되어야 함
 }
 
 /* 새로운 프로세스를 예약합니다. 진입 시 인터럽트는 꺼져 있어야 합니다.
@@ -613,13 +613,12 @@ static void schedule(void) {
 #endif
 
     if (curr != next) {
-        /* If the thread we switched from is dying, destroy its struct
-           thread. This must happen late so that thread_exit() doesn't
-           pull out the rug under itself.
-           We just queuing the page free reqeust here because the page is
-           currently used by the stack.
-           The real destruction logic will be called at the beginning of the
-           schedule(). */
+        /* 전환한 스레드가 죽어가고 있으면 해당 스레드의 구조체 스레드를 삭제합니다.
+           thread_exit()가 자체 아래 바닥을 호출하지 않도록 이 작업은 늦게 발생해야
+           합니다.
+           페이지가 현재 스택에서 사용되고 있기 때문에 여기서는 페이지 사용 가능 요청
+           을 대기열에 추가합니다.
+           실제 소멸 로직은 Schedule() 시작 부분에서 호출됩니다. */
         if (curr && curr->status == THREAD_DYING && curr != initial_thread) {
             ASSERT(curr != next);
             list_push_back(&destruction_req, &curr->elem);
