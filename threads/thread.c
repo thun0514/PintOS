@@ -297,20 +297,19 @@ tid_t thread_tid(void) {
     return thread_current()->tid;
 }
 
-/* Deschedules the current thread and destroys it.  Never
-   returns to the caller. */
+/* 현재 스레드의 일정을 취소하고 삭제. 절대 재귀적으로 호출되지 않음. */
 void thread_exit(void) {
     ASSERT(!intr_context());
 
 #ifdef USERPROG
     process_exit();
 #endif
-    /* 스레드 종료 시 all_list에서 제거 */
+    /** #Advanced Scheduler 스레드 종료 시 all_list에서 제거 */
     if (thread_mlfqs)
         list_remove(&thread_current()->all_elem);
 
-    /* Just set our status to dying and schedule another process.
-       We will be destroyed during the call to schedule_tail(). */
+    /* 상태를 죽어가는 것으로 설정하고 다른 프로세스를 예약
+       이 쓰레드는 Schedule_tail()을 호출하는 동안 파괴됨 */
     intr_disable();
     do_schedule(THREAD_DYING);
     NOT_REACHED();
@@ -452,8 +451,8 @@ static void init_thread(struct thread *t, const char *name, int priority) {
     strlcpy(t->name, name, sizeof t->name);
     t->tf.rsp = (uint64_t)t + PGSIZE - sizeof(void *);
 
-    /** #Advanced Scheduler */
     if (thread_mlfqs) {
+        /** #Advanced Scheduler 자료구조 초기화 */
         mlfqs_priority(t);
         list_push_back(&all_list, &t->all_elem);
     } else {
@@ -580,10 +579,10 @@ static void thread_launch(struct thread *th) {
         : "memory");              // list of clobbered registers -> memory의 register들이 asm 실행 전/후 갱신되어야 함
 }
 
-/* Schedules a new process. At entry, interrupts must be off.
- * This function modify current thread's status to status and then
- * finds another thread to run and switches to it.
- * It's not safe to call printf() in the schedule(). */
+/* 새로운 프로세스를 예약합니다. 진입 시 인터럽트는 꺼져 있어야 합니다.
+ * 이 함수는 현재 스레드의 상태를 status로 수정한 다음
+ * 실행할 다른 스레드를 찾아서 전환합니다.
+ * Schedule()에서 printf()를 호출하는 것은 안전하지 않습니다. */
 static void do_schedule(int status) {
     ASSERT(intr_get_level() == INTR_OFF);
     ASSERT(thread_current()->status == THREAD_RUNNING);
