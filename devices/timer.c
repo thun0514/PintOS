@@ -37,13 +37,13 @@ void timer_init(void) {
        PC가 1초에 1193180 Hz의 클럭 신호를 발생시키기 때문에 1초에 100번 인터럽트를 발생시키게 하기 위한 값 */
     uint16_t count = (1193180 + TIMER_FREQ / 2) / TIMER_FREQ;  //
     outb(0x43, 0x34);                                          /* CW: counter 0(00), LSB then MSB(11), mode 2(010), binary(0). */
-    outb(0x40, count & 0xff);                                  // 하위 8 Bit 체크
+    outb(0x40, count & 0xff);                                  // 하위 8 Bit 체크 ** 8bit bus로 연결되어 있음
     outb(0x40, count >> 8);                                    // 상위 8 Bit 체크
 
     intr_register_ext(0x20, timer_interrupt, "8254 Timer");  // 외부 인터럽트 핸들러를 호출하기 위한 VEC Number 등록
 }
 
-/* 짧은 지연을 구현하는데 사용하는 loops_per_tick 보정 */
+/* Pintos 구동 사양에 맞게 loops_per_tick 보정 */
 void timer_calibrate(void) {
     unsigned high_bit, test_bit;
 

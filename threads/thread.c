@@ -479,6 +479,7 @@ static struct thread *next_thread_to_run(void) {
 
 /* Use iretq to launch the thread *** 실제로 context switching을 하는 함수 *** */
 void do_iret(struct intr_frame *tf) {
+    /* Structure -> CPU Register로 데이터 이동 (Load) */
     __asm __volatile(             // 입력한 그대로 사용
         "movq %0, %%rsp\n"        // 인자 *tf의 주소를 Register Stack Pointer RSP에 저장
         "movq 0(%%rsp),%%r15\n"   // rsp위치의 값(stack 시작)을 레지스터 r15에 저장
@@ -529,7 +530,7 @@ static void thread_launch(struct thread *th) {
         "push %%rbx\n"  // Stack에 rbx위치의 값 저장
         "push %%rcx\n"  // Stack에 rcs위치의 값 저장
 
-        /* 현재 CPU의 레지스터 -> 구조체로 데이터 이동 (백업) */
+        /* 현재 CPU Register -> Structure 로 데이터 이동 (Backup) */
         "movq %0, %%rax\n"          // 0번 인자의 주소를 레지스터 rax에 저장
         "movq %1, %%rcx\n"          // 1번 인자의 주소를 레지스터 rcx에 저장
         "movq %%r15, 0(%%rax)\n"    // 레지스터 r15의 값을 rax+0 위치에 저장
