@@ -15,7 +15,6 @@
 #include "threads/synch.h"
 #include "threads/vaddr.h"
 #ifdef USERPROG
-#include "thread.h"
 #include "userprog/process.h"
 #endif
 
