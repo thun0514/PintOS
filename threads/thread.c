@@ -126,10 +126,6 @@ void thread_init(void) {
     initial_thread = running_thread();
     init_thread(initial_thread, "main", PRI_DEFAULT);
 
-    /** #Advanced Scheduler all list에 initial_thread 삽입 */
-    if (thread_mlfqs)
-        list_push_back(&all_list, &(initial_thread->all_elem));
-
     initial_thread->status = THREAD_RUNNING;
     initial_thread->tid = allocate_tid();
 }
@@ -765,7 +761,7 @@ void refresh_priority(void) {
         t->priority = max_thread->priority;
 }
 
-/** #Advanced Scheduler Multi Level Feedback Queue Schedul Priority 계산하는 함수*/
+/** #Advanced Scheduler MLFQS Priority 계산하는 함수*/
 void mlfqs_priority(struct thread *t) {
     if (t == idle_thread)
         return;
@@ -773,7 +769,7 @@ void mlfqs_priority(struct thread *t) {
     t->priority = fp_to_int(add_mixed(div_mixed(t->recent_cpu, -4), PRI_MAX - t->niceness * 2));
 }
 
-/** #Advanced Scheduler Multi Level Feedback Queue Schedule Recent Cpu 계산하는 함수 */
+/** #Advanced Scheduler MLFQS Recent Cpu 계산하는 함수 */
 void mlfqs_recent_cpu(struct thread *t) {
     if (t == idle_thread)
         return;
@@ -781,7 +777,7 @@ void mlfqs_recent_cpu(struct thread *t) {
     t->recent_cpu = add_mixed(mult_fp(div_fp(mult_mixed(load_avg, 2), add_mixed(mult_mixed(load_avg, 2), 1)), t->recent_cpu), t->niceness);
 }
 
-/** #Advanced Scheduler Multi Level Feedback Queue Schedule Load Average 계산하는 함수 */
+/** #Advanced Scheduler MLFQS Load Average 계산하는 함수 */
 void mlfqs_load_avg(void) {
     int ready_threads;
 
@@ -793,7 +789,7 @@ void mlfqs_load_avg(void) {
     load_avg = add_fp(mult_fp(div_fp(int_to_fp(59), int_to_fp(60)), load_avg), mult_mixed(div_fp(int_to_fp(1), int_to_fp(60)), ready_threads));
 }
 
-/** #Advanced Scheduler Multi Level Feedback Queue Schedule Recent CPU에 1을 더하는 함수 */
+/** #Advanced Scheduler MLFQS Recent CPU에 1을 더하는 함수 */
 void mlfqs_increment(void) {
     if (thread_current() == idle_thread)
         return;
@@ -801,7 +797,7 @@ void mlfqs_increment(void) {
     thread_current()->recent_cpu = add_mixed(thread_current()->recent_cpu, 1);
 }
 
-/** #Advanced Scheduler Multi Level Feedback Queue Schedule 모든 Recent CPU 재계산 */
+/** #Advanced Scheduler MLFQS 모든 Recent CPU 재계산 */
 void mlfqs_recalc_recent_cpu(void) {
     struct list_elem *e = list_begin(&all_list);
     thread_t *t = NULL;
@@ -814,7 +810,7 @@ void mlfqs_recalc_recent_cpu(void) {
     }
 }
 
-/** #Advanced Scheduler Multi Level Feedback Queue Schedule 모든 Priority 재계산 */
+/** #Advanced Scheduler MLFQS 모든 Priority 재계산 */
 void mlfqs_recalc_priority(void) {
     struct list_elem *e = list_begin(&all_list);
     thread_t *t = NULL;
