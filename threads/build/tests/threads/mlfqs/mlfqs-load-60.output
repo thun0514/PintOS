@@ -11,7 +11,7 @@ Booting from Hard Disk..Kernel command line: -q -mlfqs run mlfqs-load-60
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  209,715,200 loops/s.
+Calibrating timer...  209,510,400 loops/s.
 Boot complete.
 Executing 'mlfqs-load-60':
 (mlfqs-load-60) begin
@@ -109,8 +109,8 @@ Executing 'mlfqs-load-60':
 (mlfqs-load-60) After 178 seconds, load average=5.20.
 (mlfqs-load-60) end
 Execution of 'mlfqs-load-60' complete.
-Timer: 18834 ticks
-Thread: 12705 idle ticks, 6129 kernel ticks, 0 user ticks
+Timer: 18825 ticks
+Thread: 12732 idle ticks, 6093 kernel ticks, 0 user ticks
 Console: 5406 characters output
 Keyboard: 0 keys pressed
 Powering off...
