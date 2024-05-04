@@ -173,7 +173,7 @@ int process_exec(void *f_name) {
     char *ptr, *arg;
     int arg_cnt = 0;
     char *arg_list[32];
-
+    
     for (arg = strtok_r(file_name, " ", &ptr); arg != NULL; arg = strtok_r(NULL, " ", &ptr))
         arg_list[arg_cnt++] = arg;
 
@@ -188,7 +188,7 @@ int process_exec(void *f_name) {
         return -1;
 
     /** #Command Line Parsing - 디버깅용 툴 */
-    hex_dump(if_.rsp, if_.rsp, USER_STACK - if_.rsp, true); // 0x47480000
+    hex_dump(if_.rsp, if_.rsp, USER_STACK - if_.rsp, true);
 
     /* Start switched process. */
     do_iret(&if_);
