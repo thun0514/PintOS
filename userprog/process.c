@@ -44,7 +44,7 @@ tid_t process_create_initd(const char *file_name) {
     tid_t tid;
 
     /* FILE_NAME의 사본을 만듭니다.
-     * 그렇지 않으면 호출자와 load() 사이에 경합이 발생합니다. */
+     * 그렇지 않으면 호출자와 load() 사이에 race가 발생합니다. */
     fn_copy = palloc_get_page(0);
     if (fn_copy == NULL)
         return TID_ERROR;
@@ -159,9 +159,15 @@ int process_exec(void *f_name) {
     char *file_name = f_name;
     bool success;
 
-    /* We cannot use the intr_frame in the thread structure.
-     * This is because when current thread rescheduled,
-     * it stores the execution information to the member. */
+    /** #Command Line Parsing - 변수 선언 */
+    char *file_name_array[100];
+    char **ptr;
+    char *arg;
+    int arg_cnt = 0;
+    char *arg_list[10];
+
+    /* 스레드 구조에서는 intr_frame을 사용할 수 없습니다.
+     * 현재 쓰레드가 재스케줄 되면 실행 정보를 멤버에게 저장하기 때문입니다. */
     struct intr_frame _if;
     _if.ds = _if.es = _if.ss = SEL_UDSEG;
     _if.cs = SEL_UCSEG;
@@ -170,11 +176,22 @@ int process_exec(void *f_name) {
     /* We first kill the current context */
     process_cleanup();
 
+    /** #Command Line Parsing - 문자열 분리 */
+    strcpy(file_name_array, file_name);
+    ptr = &file_name_array;
+    for (arg = strtok_r(file_name_array, ' ', &ptr); arg != NULL; arg = strtok_r(NULL, ' ', &ptr))
+        arg_list[arg_cnt++] = arg;
+
     /* And then load the binary */
-    success = load(file_name, &_if);
+    success = load(arg_list[0], &_if); /** arg_list[0]을 파일 이름으로 사용 */
+
+    argument_stack(arg_list, arg_cnt, &_if);
+
+    /** #Command Line Parsing - 디버깅용 툴 */
+    hex_dump(_if.rsp, _if.rsp, KERN_BASE - _if.rsp, true);
 
     /* If load failed, quit. */
-    palloc_free_page(file_name);
+    palloc_free_page(arg_list[0]);
     if (!success)
         return -1;
 
@@ -603,3 +620,4 @@ static bool setup_stack(struct intr_frame *if_) {
     return success;
 }
 #endif /* VM */
+
