@@ -160,32 +160,28 @@ int process_exec(void *f_name) {
     bool success;
 
     /** #Command Line Parsing - 변수 선언 */
-    char *file_name_array[128];
-    char **ptr;
-    char *arg;
+    char *ptr, *arg;
     int arg_cnt = 0;
-    char *arg_list[64];
+    char *arg_list[32];
 
     /* 스레드 구조에서는 intr_frame을 사용할 수 없습니다.
      * 현재 쓰레드가 재스케줄 되면 실행 정보를 멤버에게 저장하기 때문입니다. */
-    struct intr_frame _if;
-    _if.ds = _if.es = _if.ss = SEL_UDSEG;
-    _if.cs = SEL_UCSEG;
-    _if.eflags = FLAG_IF | FLAG_MBS;
+    struct intr_frame if_;
+    if_.ds = if_.es = if_.ss = SEL_UDSEG;
+    if_.cs = SEL_UCSEG;
+    if_.eflags = FLAG_IF | FLAG_MBS;
 
     /* We first kill the current context */
     process_cleanup();
 
     /** #Command Line Parsing - 문자열 분리 */
-    memcpy(file_name_array, file_name, strlen(file_name)+1);
-    ptr = &file_name_array;
-    for (arg = strtok_r(file_name_array, ' ', &ptr); arg != NULL; arg = strtok_r(NULL, ' ', &ptr))
+    for (arg = strtok_r(file_name, ' ', &ptr); arg != NULL; arg = strtok_r(NULL, ' ', &ptr))
         arg_list[arg_cnt++] = arg;
 
     /* And then load the binary */
-    success = load(arg_list[0], &_if); /** arg_list[0]을 파일 이름으로 사용 */
+    success = load(arg_list[0], &if_); /** arg_list[0]을 파일 이름으로 사용 */
 
-    argument_stack(arg_list, arg_cnt, &_if);
+    argument_stack(arg_list, arg_cnt, &if_);
 
     /* If load failed, quit. */
     palloc_free_page(arg_list[0]);
@@ -193,10 +189,10 @@ int process_exec(void *f_name) {
         return -1;
 
     /** #Command Line Parsing - 디버깅용 툴 */
-    hex_dump(_if.rsp, _if.rsp, KERN_BASE - _if.rsp, true);
+    hex_dump(if_.rsp, if_.rsp, KERN_BASE - if_.rsp, true);
 
     /* Start switched process. */
-    do_iret(&_if);
+    do_iret(&if_);
     NOT_REACHED();
 }
 
@@ -622,32 +618,31 @@ static bool setup_stack(struct intr_frame *if_) {
 #endif /* VM */
 
 /** #Command Line Parsing - 유저 스택에 파싱된 토큰을 저장하는 함수 */
-void argument_stack(char **argv, int argc, void **rsp) {
-    struct intr_frame _if = *(struct intr_frame *)rsp;
+void argument_stack(char **argv, int argc, struct intr_frame *if_) {
     char *arg_addr[100];
     int argv_len;
 
     for (int i = argc - 1; i >= 0; i--) {
-        argv_len = strlen(argv[i]);
-        _if.rsp = _if.rsp - strlen(argv[i] + 1);
-        memcpy(_if.rsp, argv[i], argv_len + 1);
-        arg_addr[i] = _if.rsp;
+        argv_len = strlen(argv[i]) + 1;
+        if_->rsp -= argv_len;
+        memcpy(if_->rsp, argv[i], argv_len);
+        arg_addr[i] = if_->rsp;
     }
 
-    while (!(_if.rsp % 8))
-        *(uint8_t *)(--_if.rsp) = 0;
+    while (!(if_->rsp % 8))
+        *(uint8_t *)(--if_->rsp) = 0;
 
     for (int i = argc; i >= 0; i--) {
-        _if.rsp = _if.rsp - 8;
+        if_->rsp = if_->rsp - 8;
         if (i == argc)
-            memset(_if.rsp, 0, sizeof(char **));
+            memset(if_->rsp, 0, sizeof(char **));
         else
-            memcpy(_if.rsp, &arg_addr[i], sizeof(char **));
+            memcpy(if_->rsp, &arg_addr[i], sizeof(char **));
     }
 
-    _if.rsp = _if.rsp - 8;
-    memset(_if.rsp, 0, sizeof(void *));
+    if_->rsp = if_->rsp - 8;
+    memset(if_->rsp, 0, sizeof(void *));
 
-    _if.R.rdi = argc;
-    _if.R.rsi = _if.rsp + 8;
+    if_->R.rdi = argc;
+    if_->R.rsi = if_->rsp + 8;
 }
