@@ -160,11 +160,11 @@ int process_exec(void *f_name) {
     bool success;
 
     /** #Command Line Parsing - 변수 선언 */
-    char *file_name_array[100];
+    char *file_name_array[128];
     char **ptr;
     char *arg;
     int arg_cnt = 0;
-    char *arg_list[10];
+    char *arg_list[64];
 
     /* 스레드 구조에서는 intr_frame을 사용할 수 없습니다.
      * 현재 쓰레드가 재스케줄 되면 실행 정보를 멤버에게 저장하기 때문입니다. */
@@ -187,13 +187,13 @@ int process_exec(void *f_name) {
 
     argument_stack(arg_list, arg_cnt, &_if);
 
-    /** #Command Line Parsing - 디버깅용 툴 */
-    hex_dump(_if.rsp, _if.rsp, KERN_BASE - _if.rsp, true);
-
     /* If load failed, quit. */
     palloc_free_page(arg_list[0]);
     if (!success)
         return -1;
+
+    /** #Command Line Parsing - 디버깅용 툴 */
+    hex_dump(_if.rsp, _if.rsp, KERN_BASE - _if.rsp, true);
 
     /* Start switched process. */
     do_iret(&_if);
