@@ -113,6 +113,15 @@ void exit(int status) {
     thread_exit();
 }
 
+pid_t fork(const char *thread_name) {
+}
+
+int exec(const char *file) {
+}
+
+int wait(pid_t) {
+}
+
 bool create(const char *file, unsigned initial_size) {
     return (filesys_create(file, initial_size) ? true : false);
 }
@@ -121,94 +130,23 @@ bool remove(const char *file) {
     return (filesys_remove(file) ? true : false);
 }
 
-pid_t fork(const char *thread_name) {
-    return (pid_t)syscall1(SYS_FORK, thread_name);
-}
-
-int exec(const char *file) {
-    return (pid_t)syscall1(SYS_EXEC, file);
-}
-
-int wait(pid_t pid) {
-    return syscall1(SYS_WAIT, pid);
-}
-
-bool create(const char *file, unsigned initial_size) {
-    return syscall2(SYS_CREATE, file, initial_size);
-}
-
-bool remove(const char *file) {
-    return syscall1(SYS_REMOVE, file);
-}
-
 int open(const char *file) {
-    return syscall1(SYS_OPEN, file);
 }
 
 int filesize(int fd) {
-    return syscall1(SYS_FILESIZE, fd);
 }
 
-int read(int fd, void *buffer, unsigned size) {
-    return syscall3(SYS_READ, fd, buffer, size);
+int read(int fd, void *buffer, unsigned length) {
 }
 
-int write(int fd, const void *buffer, unsigned size) {
-    return syscall3(SYS_WRITE, fd, buffer, size);
+int write(int fd, const void *buffer, unsigned length) {
 }
 
 void seek(int fd, unsigned position) {
-    syscall2(SYS_SEEK, fd, position);
 }
 
 unsigned tell(int fd) {
-    return syscall1(SYS_TELL, fd);
 }
 
 void close(int fd) {
-    syscall1(SYS_CLOSE, fd);
-}
-
-int dup2(int oldfd, int newfd) {
-    return syscall2(SYS_DUP2, oldfd, newfd);
-}
-
-void *mmap(void *addr, size_t length, int writable, int fd, off_t offset) {
-    return (void *)syscall5(SYS_MMAP, addr, length, writable, fd, offset);
-}
-
-void munmap(void *addr) {
-    syscall1(SYS_MUNMAP, addr);
-}
-
-bool chdir(const char *dir) {
-    return syscall1(SYS_CHDIR, dir);
-}
-
-bool mkdir(const char *dir) {
-    return syscall1(SYS_MKDIR, dir);
-}
-
-bool readdir(int fd, char name[READDIR_MAX_LEN + 1]) {
-    return syscall2(SYS_READDIR, fd, name);
-}
-
-bool isdir(int fd) {
-    return syscall1(SYS_ISDIR, fd);
-}
-
-int inumber(int fd) {
-    return syscall1(SYS_INUMBER, fd);
-}
-
-int symlink(const char *target, const char *linkpath) {
-    return syscall2(SYS_SYMLINK, target, linkpath);
-}
-
-int mount(const char *path, int chan_no, int dev_no) {
-    return syscall3(SYS_MOUNT, path, chan_no, dev_no);
-}
-
-int umount(const char *path) {
-    return syscall1(SYS_UMOUNT, path);
 }
