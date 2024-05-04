@@ -44,9 +44,9 @@ void syscall_handler(struct intr_frame *f UNUSED) {
     // TODO: Your implementation goes here.
     int sys_number = f->R.rax;
 
-	// Argument 순서 
-	// %rdi %rsi %rdx %r10 %r8 %r9
-	
+    // Argument 순서
+    // %rdi %rsi %rdx %r10 %r8 %r9
+
     switch (sys_number) {
         case SYS_HALT:
             halt();
@@ -102,19 +102,20 @@ void check_address(void *addr) {
         exit(-1);
 }
 
-void halt(void){
-	power_off();
+void halt(void) {
+    power_off();
 }
 
-void exit(int status){
-	thread_t *t = thread_current();
-	printf("%s: exit(%d)\n", t->name, status);
-	thread_exit();
+void exit(int status) {
+    thread_t *t = thread_current();
+    printf("%s: exit(%d)\n", t->name, status);
+    thread_exit();
 }
 
-bool create(const char *file, unsigned initial_size){
+bool create(const char *file, unsigned initial_size) {
+    return (filesys_create(file, initial_size) ? true : false);
 }
 
-bool remove(const char *file){
-	
+bool remove(const char *file) {
+    return (filesys_remove(file) ? true : false);
 }
