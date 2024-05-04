@@ -43,7 +43,8 @@ void syscall_handler(struct intr_frame *f UNUSED) {
     thread_exit();
 }
 
-void check_address(void *addr){
-	if(is_user_vaddr(addr))
-		exit(-1);
+/** #System Call */
+void check_address(void *addr) {
+    if (is_user_vaddr(addr))
+        exit(-1);
 }
