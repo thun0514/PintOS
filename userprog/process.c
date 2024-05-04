@@ -177,7 +177,7 @@ int process_exec(void *f_name) {
     process_cleanup();
 
     /** #Command Line Parsing - 문자열 분리 */
-    strcpy(file_name_array, file_name);
+    memcpy(file_name_array, file_name, strlen(file_name)+1);
     ptr = &file_name_array;
     for (arg = strtok_r(file_name_array, ' ', &ptr); arg != NULL; arg = strtok_r(NULL, ' ', &ptr))
         arg_list[arg_cnt++] = arg;
@@ -625,10 +625,12 @@ static bool setup_stack(struct intr_frame *if_) {
 void argument_stack(char **argv, int argc, void **rsp) {
     struct intr_frame _if = *(struct intr_frame *)rsp;
     char *arg_addr[100];
+    int argv_len;
 
     for (int i = argc - 1; i >= 0; i--) {
-        _if.rsp = _if.rsp - strlen(argv[i]);
-        strcpy(_if.rsp, argv[i]);
+        argv_len = strlen(argv[i]);
+        _if.rsp = _if.rsp - strlen(argv[i] + 1);
+        memcpy(_if.rsp, argv[i], argv_len + 1);
         arg_addr[i] = _if.rsp;
     }
 
@@ -640,12 +642,12 @@ void argument_stack(char **argv, int argc, void **rsp) {
         if (i == argc)
             memset(_if.rsp, 0, sizeof(char **));
         else
-			memcpy(_if.rsp, &arg_addr[i], sizeof(char **));
+            memcpy(_if.rsp, &arg_addr[i], sizeof(char **));
     }
 
-	_if.rsp = _if.rsp - 8;
-	memset(_if.rsp, 0, sizeof(void *));
+    _if.rsp = _if.rsp - 8;
+    memset(_if.rsp, 0, sizeof(void *));
 
-	_if.R.rdi = argc;
-	_if.R.rsi = _if.rsp + 8;
+    _if.R.rdi = argc;
+    _if.R.rsi = _if.rsp + 8;
 }
