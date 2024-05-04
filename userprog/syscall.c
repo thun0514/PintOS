@@ -10,6 +10,9 @@
 #include "threads/thread.h"
 #include "userprog/gdt.h"
 
+/** #System Call */
+#include "filesys/filesys.h"
+
 void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
 
@@ -110,7 +113,6 @@ void exit(int status){
 }
 
 bool create(const char *file, unsigned initial_size){
-	
 }
 
 bool remove(const char *file){
