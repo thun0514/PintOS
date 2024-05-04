@@ -174,41 +174,39 @@ int process_exec(void *f_name) {
     int arg_cnt = 0;
     char *arg_list[32];
 
-    for (arg = strtok_r(file_name, ' ', &ptr); arg != NULL; arg = strtok_r(NULL, ' ', &ptr))
+    for (arg = strtok_r(file_name, " ", &ptr); arg != NULL; arg = strtok_r(NULL, " ", &ptr))
         arg_list[arg_cnt++] = arg;
 
     /* And then load the binary */
-    success = load(arg_list[0], &if_); /** arg_list[0]을 파일 이름으로 사용 */
+    success = load(file_name, &if_);
 
     argument_stack(arg_list, arg_cnt, &if_);
 
     /* If load failed, quit. */
-    palloc_free_page(arg_list[0]);
+    palloc_free_page(file_name);
     if (!success)
         return -1;
 
     /** #Command Line Parsing - 디버깅용 툴 */
-    hex_dump(if_.rsp, if_.rsp, KERN_BASE - if_.rsp, true);
+    hex_dump(if_.rsp, if_.rsp, USER_STACK - if_.rsp, true); // 0x47480000
 
     /* Start switched process. */
     do_iret(&if_);
     NOT_REACHED();
 }
 
-/* Waits for thread TID to die and returns its exit status.  If
- * it was terminated by the kernel (i.e. killed due to an
- * exception), returns -1.  If TID is invalid or if it was not a
- * child of the calling process, or if process_wait() has already
- * been successfully called for the given TID, returns -1
- * immediately, without waiting.
+/* 스레드 TID가 종료될 때까지 기다리고 종료 상태를 반환합니다. 커널에 의해 종료된 경우
+ * (즉, 예외로 인해 종료된 경우) -1을 반환합니다. TID가 유효하지 않거나 호출 프로세스의
+ * 하위 프로세스가 아니거나 주어진 TID에 대해 process_wait()가 이미 성공적으로 호출된
+ * 경우 기다리지 않고 즉시 -1을 반환합니다.
  *
- * This function will be implemented in problem 2-2.  For now, it
- * does nothing. */
+ * 이 기능은 문제 2-2에서 구현될 것입니다. 지금은 아무것도 하지 않습니다. */
 int process_wait(tid_t child_tid UNUSED) {
     /* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
      * XXX:       to add infinite loop here before
      * XXX:       implementing the process_wait. */
-    for (int i = 0; i < 10000000000; i++);
+    for (int i = 0; i < 10000000000; i++)
+        ;
     return -1;
 }
 
