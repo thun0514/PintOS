@@ -621,3 +621,31 @@ static bool setup_stack(struct intr_frame *if_) {
 }
 #endif /* VM */
 
+/** #Command Line Parsing - 유저 스택에 파싱된 토큰을 저장하는 함수 */
+void argument_stack(char **argv, int argc, void **rsp) {
+    struct intr_frame _if = *(struct intr_frame *)rsp;
+    char *arg_addr[100];
+
+    for (int i = argc - 1; i >= 0; i--) {
+        _if.rsp = _if.rsp - strlen(argv[i]);
+        strcpy(_if.rsp, argv[i]);
+        arg_addr[i] = _if.rsp;
+    }
+
+    while (!(_if.rsp % 8))
+        *(uint8_t *)(--_if.rsp) = 0;
+
+    for (int i = argc; i >= 0; i--) {
+        _if.rsp = _if.rsp - 8;
+        if (i == argc)
+            memset(_if.rsp, 0, sizeof(char **));
+        else
+			memcpy(_if.rsp, &arg_addr[i], sizeof(char **));
+    }
+
+	_if.rsp = _if.rsp - 8;
+	memset(_if.rsp, 0, sizeof(void *));
+
+	_if.R.rdi = argc;
+	_if.R.rsi = _if.rsp + 8;
+}
