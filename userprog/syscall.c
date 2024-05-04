@@ -105,12 +105,14 @@ void halt(void){
 
 void exit(int status){
 	thread_t *t = thread_current();
+	printf("%s: exit(%d)\n", t->name, status);
+	thread_exit();
 }
 
 bool create(const char *file, unsigned initial_size){
-
+	
 }
 
 bool remove(const char *file){
-
+	
 }
