@@ -44,6 +44,7 @@ __attribute__((always_inline)) static __inline int64_t syscall(uint64_t num_, ui
 #define syscall4(NUMBER, ARG0, ARG1, ARG2, ARG3) (syscall(((uint64_t *)NUMBER), ((uint64_t)ARG0), ((uint64_t)ARG1), ((uint64_t)ARG2), ((uint64_t)ARG3), 0, 0))
 
 #define syscall5(NUMBER, ARG0, ARG1, ARG2, ARG3, ARG4) (syscall(((uint64_t)NUMBER), ((uint64_t)ARG0), ((uint64_t)ARG1), ((uint64_t)ARG2), ((uint64_t)ARG3), ((uint64_t)ARG4), 0))
+
 void halt(void) {
     syscall0(SYS_HALT);
     NOT_REACHED();
