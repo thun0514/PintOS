@@ -98,3 +98,19 @@ void check_address(void *addr) {
     if (is_user_vaddr(addr))
         exit(-1);
 }
+
+void halt(void){
+	power_off();
+}
+
+void exit(int status){
+	thread_t *t = thread_current();
+}
+
+bool create(const char *file, unsigned initial_size){
+
+}
+
+bool remove(const char *file){
+
+}
