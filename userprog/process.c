@@ -159,11 +159,6 @@ int process_exec(void *f_name) {
     char *file_name = f_name;
     bool success;
 
-    /** #Command Line Parsing - 변수 선언 */
-    char *ptr, *arg;
-    int arg_cnt = 0;
-    char *arg_list[32];
-
     /* 스레드 구조에서는 intr_frame을 사용할 수 없습니다.
      * 현재 쓰레드가 재스케줄 되면 실행 정보를 멤버에게 저장하기 때문입니다. */
     struct intr_frame if_;
@@ -175,6 +170,10 @@ int process_exec(void *f_name) {
     process_cleanup();
 
     /** #Command Line Parsing - 문자열 분리 */
+    char *ptr, *arg;
+    int arg_cnt = 0;
+    char *arg_list[32];
+
     for (arg = strtok_r(file_name, ' ', &ptr); arg != NULL; arg = strtok_r(NULL, ' ', &ptr))
         arg_list[arg_cnt++] = arg;
 
@@ -209,6 +208,7 @@ int process_wait(tid_t child_tid UNUSED) {
     /* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
      * XXX:       to add infinite loop here before
      * XXX:       implementing the process_wait. */
+    for (int i = 0; i < 10000000000; i++);
     return -1;
 }
 
