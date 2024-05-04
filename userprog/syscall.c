@@ -12,6 +12,8 @@
 
 /** #System Call */
 #include "filesys/filesys.h"
+#include "threads/mmu.h"
+#include "userprog/process.h"
 
 void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
@@ -114,12 +116,17 @@ void exit(int status) {
 }
 
 pid_t fork(const char *thread_name) {
+    return process_fork(thread_name, NULL);
 }
 
 int exec(const char *file) {
+	check_address(file);
+	
+    return process_exec(file);
 }
 
-int wait(pid_t) {
+int wait(pid_t tid) {
+	return process_wait(tid);
 }
 
 bool create(const char *file, unsigned initial_size) {
