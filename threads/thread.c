@@ -695,8 +695,13 @@ void test_max_priority(void) {
 
     thread_t *th = list_entry(list_front(&ready_list), thread_t, elem);
 
-    if (thread_get_priority() < th->priority)
+    if (thread_get_priority() < th->priority) {
+        /** Project 2 Panic 방지 */
+        if (intr_context)
+            return;
+
         thread_yield();
+    }
 }
 
 /** #Priority Scheduling 첫번째 인자의 우선순위가 높으면 1, 아니면 0 */
