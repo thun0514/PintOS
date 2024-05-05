@@ -227,7 +227,7 @@ int write(int fd, const void *buffer, unsigned length) {
     }
 
     if (fd == 2)  // Error Stream TBD
-        return -2;
+        return -1;
 
     lock_acquire(&filesys_lock);
     bytes = file_write(file, buffer, length);
@@ -237,9 +237,21 @@ int write(int fd, const void *buffer, unsigned length) {
 }
 
 void seek(int fd, unsigned position) {
+    struct file *file = process_get_file(fd);
+
+    if (fd < 3 || file == NULL)
+        return;
+
+    file_seek(file, position);
 }
 
-unsigned tell(int fd) {
+int tell(int fd) {
+    struct file *file = process_get_file(fd);
+
+    if (fd < 3 || file == NULL)
+        return -1;
+
+    file_tell(file);
 }
 
 void close(int fd) {
