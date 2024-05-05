@@ -10,7 +10,7 @@
 #include "threads/thread.h"
 #include "userprog/gdt.h"
 
-/** #System Call */
+/** #Project 2: System Call */
 #include "filesys/filesys.h"
 #include "threads/mmu.h"
 #include "userprog/process.h"
@@ -162,13 +162,22 @@ static int process_add_file(struct file *f) {
     thread_t *curr = thread_current();
     struct file **fdt = curr->fdt;
 
-    while (curr->next_fd < FDCOUNT_LIMIT && fdt[curr->next_fd]) {
-        curr->next_fd++;
+    while (curr->fd_idx < FDCOUNT_LIMIT && fdt[curr->fd_idx]) {
+        curr->fd_idx++;
 
-        if (curr->next_fd > FDCOUNT_LIMIT)
+        if (curr->fd_idx > FDCOUNT_LIMIT)
             return -1;
     }
 
-    fdt[curr->next_fd] = f;
-    return curr->next_fd;
+    fdt[curr->fd_idx] = f;
+    return curr->fd_idx;
+}
+
+static struct file *process_get_file(int fd) {
+    thread_t *curr = thread_current();
+
+    if (fd > FDCOUNT_LIMIT)
+        return NULL;
+
+    return curr->fdt[fd];
 }
