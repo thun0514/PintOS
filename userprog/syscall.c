@@ -181,12 +181,28 @@ int filesize(int fd) {
 int read(int fd, void *buffer, unsigned length) {
     check_address(buffer);
 
-    
+    if (fd == 0) {  // 0(stdin) -> keyboard로 직접 입력
+        int i = 0;  // 쓰레기 값 return 방지
+        char c;
+        unsigned char *buf = buffer;
 
+        for (; i < length; i++) {
+            c = input_getc();
+            *buf++ = c;
+            if (c == '\0')
+                break;
+        }
+
+        return i;
+    }
+    // 그 외의 경우
     struct file *file = process_get_file(fd);
     off_t bytes = -1;
 
-    if (file == NULL)
+    if (file == NULL)  // 파일이 비어있을 경우
+        return -1;
+
+    if (fd < 3)  // 파일이 standard stream을 사용할 경우
         return -1;
 
     lock_acquire(&filesys_lock);
