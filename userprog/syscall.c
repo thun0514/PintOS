@@ -43,9 +43,13 @@ void syscall_init(void) {
      * until the syscall_entry swaps the userland stack to the kernel
      * mode stack. Therefore, we masked the FLAG_FL. */
     write_msr(MSR_SYSCALL_MASK, FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
+
+    /** #Project 2: System Call - read & write 용 lock 초기화 */
+    lock_init(&filesys_lock);
 }
 
 /* The main system call interface */
+/** #Project 2: System Call - 시스템 콜 핸들러 */
 void syscall_handler(struct intr_frame *f UNUSED) {
     // TODO: Your implementation goes here.
     int sys_number = f->R.rax;
@@ -103,7 +107,7 @@ void syscall_handler(struct intr_frame *f UNUSED) {
     thread_exit();
 }
 
-/** #System Call */
+
 void check_address(void *addr) {
     if (is_user_vaddr(addr))
         exit(-1);
@@ -115,7 +119,8 @@ void halt(void) {
 
 void exit(int status) {
     thread_t *t = thread_current();
-    printf("%s: exit(%d)\n", t->name, status);
+    t->exit_status = status;
+    printf("%s: exit(%d)\n", t->name, t->exit_status);
     thread_exit();
 }
 
@@ -162,6 +167,7 @@ unsigned tell(int fd) {
 void close(int fd) {
 }
 
+/** #Project 2: System Call - 현재 스레드 fdt에 파일 추가 */
 static int process_add_file(struct file *f) {
     thread_t *curr = thread_current();
     struct file **fdt = curr->fdt;
@@ -176,6 +182,7 @@ static int process_add_file(struct file *f) {
     return curr->fd_idx;
 }
 
+/** #Project 2: System Call - 현재 스레드의 fd번째 파일 정보 얻기 */
 static struct file *process_get_file(int fd) {
     thread_t *curr = thread_current();
 
@@ -185,6 +192,7 @@ static struct file *process_get_file(int fd) {
     return curr->fdt[fd];
 }
 
+/** #Project 2: System Call - 현재 스레드의 fdt에서 파일 삭제 */
 static int process_close_file(int fd) {
     thread_t *curr = thread_current();
 
