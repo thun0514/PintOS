@@ -36,8 +36,8 @@ typedef int tid_t;
 #define LOAD_AVG_DEFAULT   0
 
 /** #Project 2: System Call */
-#define FDT_PAGES     3
-#define FDCOUNT_LIMIT FDT_PAGES * (1 << 9)
+#define FDT_PAGES     3                     // test `multi-oom` 통과용
+#define FDCOUNT_LIMIT FDT_PAGES * (1 << 9)  // 512개 인 이유: 페이지 크기 4kb / 파일 포인터 8byte
 
 /* A kernel thread or user process.
  *
