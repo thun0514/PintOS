@@ -11,6 +11,7 @@
 #include "userprog/gdt.h"
 
 /** #Project 2: System Call */
+#include "filesys/file.h"
 #include "filesys/filesys.h"
 #include "threads/mmu.h"
 #include "userprog/process.h"
@@ -150,6 +151,18 @@ bool remove(const char *file) {
 }
 
 int open(const char *file) {
+    check_address(file);
+    struct file *newfile = filesys_open(file);
+
+    if (newfile == NULL)
+        return -1;
+
+    int fd = process_add_file(newfile);
+
+    if (fd == -1)
+        file_close(newfile);
+
+    return fd;
 }
 
 int filesize(int fd) {
@@ -175,14 +188,12 @@ static int process_add_file(struct file *f) {
     thread_t *curr = thread_current();
     struct file **fdt = curr->fdt;
 
-    while (curr->fd_idx < FDCOUNT_LIMIT && fdt[curr->fd_idx])
-        curr->fd_idx++;
-
     if (curr->fd_idx > FDCOUNT_LIMIT)
         return -1;
 
-    fdt[curr->fd_idx] = f;
-    return curr->fd_idx;
+    fdt[curr->fd_idx++] = f;
+
+    return curr->fd_idx - 1;
 }
 
 /** #Project 2: System Call - 현재 스레드의 fd번째 파일 정보 얻기 */
