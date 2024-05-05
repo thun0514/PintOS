@@ -166,12 +166,11 @@ static int process_add_file(struct file *f) {
     thread_t *curr = thread_current();
     struct file **fdt = curr->fdt;
 
-    while (curr->fd_idx < FDCOUNT_LIMIT && fdt[curr->fd_idx]) {
+    while (curr->fd_idx < FDCOUNT_LIMIT && fdt[curr->fd_idx])
         curr->fd_idx++;
 
-        if (curr->fd_idx > FDCOUNT_LIMIT)
-            return -1;
-    }
+    if (curr->fd_idx > FDCOUNT_LIMIT)
+        return -1;
 
     fdt[curr->fd_idx] = f;
     return curr->fd_idx;
