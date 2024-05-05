@@ -139,12 +139,14 @@ int wait(pid_t tid) {
 
 bool create(const char *file, unsigned initial_size) {
     check_address(file);
-    
+
     return filesys_create(file, initial_size);
 }
 
 bool remove(const char *file) {
-    return (filesys_remove(file) ? true : false);
+    check_address(file);
+
+    return ilesys_remove(file);
 }
 
 int open(const char *file) {
