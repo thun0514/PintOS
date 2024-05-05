@@ -255,6 +255,14 @@ int tell(int fd) {
 }
 
 void close(int fd) {
+    struct file *file = process_get_file(fd);
+
+    if (fd < 3 || file == NULL)
+        return;
+
+    process_close_file(fd); 
+
+    file_close(file);
 }
 
 /** #Project 2: System Call - 현재 스레드 fdt에 파일 추가 */
