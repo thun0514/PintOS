@@ -251,7 +251,7 @@ int tell(int fd) {
     if (fd < 3 || file == NULL)
         return -1;
 
-    file_tell(file);
+    return file_tell(file);
 }
 
 void close(int fd) {
