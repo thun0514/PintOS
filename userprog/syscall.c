@@ -18,6 +18,10 @@
 void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
 
+static int process_add_file(struct file *f);
+static struct file *process_get_file(int fd);
+static int process_close_file(int fd);
+
 /* System call.
  *
  * Previously system call services was handled by the interrupt handler
@@ -180,4 +184,14 @@ static struct file *process_get_file(int fd) {
         return NULL;
 
     return curr->fdt[fd];
+}
+
+static int process_close_file(int fd) {
+    thread_t *curr = thread_current();
+
+    if (fd > FDCOUNT_LIMIT)
+        return -1;
+
+    curr->fdt[fd] = NULL;
+    return 0;
 }

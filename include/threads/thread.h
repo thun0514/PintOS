@@ -127,7 +127,7 @@ typedef struct thread {
     /** #Project 2: System Call */
     int exit_status;
     struct file **fdt;  // 파일 디스크립터 테이블
-    int next_fd;        // 파일 디스크립터 인덱스
+    int fd_idx;         // 파일 디스크립터 인덱스
 #endif
 #ifdef VM
     /* Table for whole virtual memory owned by thread. */
