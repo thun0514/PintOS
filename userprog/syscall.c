@@ -213,6 +213,27 @@ int read(int fd, void *buffer, unsigned length) {
 }
 
 int write(int fd, const void *buffer, unsigned length) {
+    check_address(buffer);
+
+    struct file *file = process_get_file(fd);
+    off_t bytes = -1;
+
+    if (fd == 0 || file == NULL)
+        return -1;
+
+    if (fd == 1) {  // 1(stdout) -> console로 출력
+        putbuf(buffer, length);
+        return length;
+    }
+
+    if (fd == 2)  // Error Stream TBD
+        return -2;
+
+    lock_acquire(&filesys_lock);
+    bytes = file_write(file, buffer, length);
+    lock_release(&filesys_lock);
+
+    return bytes;
 }
 
 void seek(int fd, unsigned position) {
