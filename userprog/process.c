@@ -19,7 +19,9 @@
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 #include "userprog/gdt.h"
+#include "userprog/process.h"
 #include "userprog/tss.h"
+
 #ifdef VM
 #include "vm/vm.h"
 #endif
