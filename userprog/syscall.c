@@ -15,6 +15,7 @@
 #include "filesys/filesys.h"
 #include "threads/mmu.h"
 #include "userprog/process.h"
+/** -----------------------  */
 
 void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
@@ -22,6 +23,9 @@ void syscall_handler(struct intr_frame *);
 static int process_add_file(struct file *f);
 static struct file *process_get_file(int fd);
 static int process_close_file(int fd);
+
+/** #Project 2: System Call - 파일 읽기/쓰기 용 lock */
+struct lock filesys_lock;
 
 /* System call.
  *
@@ -147,7 +151,7 @@ bool create(const char *file, unsigned initial_size) {
 bool remove(const char *file) {
     check_address(file);
 
-    return ilesys_remove(file);
+    return filesys_remove(file);
 }
 
 int open(const char *file) {
@@ -175,6 +179,21 @@ int filesize(int fd) {
 }
 
 int read(int fd, void *buffer, unsigned length) {
+    check_address(buffer);
+
+    
+
+    struct file *file = process_get_file(fd);
+    off_t bytes = -1;
+
+    if (file == NULL)
+        return -1;
+
+    lock_acquire(&filesys_lock);
+    bytes = file_read(file, buffer, length);
+    lock_release(&filesys_lock);
+
+    return bytes;
 }
 
 int write(int fd, const void *buffer, unsigned length) {

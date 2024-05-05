@@ -3,6 +3,9 @@
 
 #include <stdbool.h>
 
+/** #Project 2: System Call */
+#include "threads/synch.h"
+
 void syscall_init(void);
 
 /* Process identifier. */
@@ -12,8 +15,7 @@ typedef int pid_t;
 /* Maximum characters in a filename written by readdir(). */
 #define READDIR_MAX_LEN 14
 
-/** #Project 2: System Call */
-struct lock filesys_lock;
+
 
 void check_address(void *addr);
 
