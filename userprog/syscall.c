@@ -27,8 +27,8 @@ void syscall_handler(struct intr_frame *);
  * The syscall instruction works by reading the values from the the Model
  * Specific Register (MSR). For the details, see the manual. */
 
-#define MSR_STAR 0xc0000081         /* Segment selector msr */
-#define MSR_LSTAR 0xc0000082        /* Long mode SYSCALL target */
+#define MSR_STAR         0xc0000081 /* Segment selector msr */
+#define MSR_LSTAR        0xc0000082 /* Long mode SYSCALL target */
 #define MSR_SYSCALL_MASK 0xc0000084 /* Mask for the eflags */
 
 void syscall_init(void) {
@@ -120,13 +120,13 @@ pid_t fork(const char *thread_name) {
 }
 
 int exec(const char *file) {
-	check_address(file);
-	
+    check_address(file);
+
     return process_exec(file);
 }
 
 int wait(pid_t tid) {
-	return process_wait(tid);
+    return process_wait(tid);
 }
 
 bool create(const char *file, unsigned initial_size) {
@@ -156,4 +156,19 @@ unsigned tell(int fd) {
 }
 
 void close(int fd) {
+}
+
+static int process_add_file(struct file *f) {
+    thread_t *curr = thread_current();
+    struct file **fdt = curr->fdt;
+
+    while (curr->next_fd < FDCOUNT_LIMIT && fdt[curr->next_fd]) {
+        curr->next_fd++;
+
+        if (curr->next_fd > FDCOUNT_LIMIT)
+            return -1;
+    }
+
+    fdt[curr->next_fd] = f;
+    return curr->next_fd;
 }

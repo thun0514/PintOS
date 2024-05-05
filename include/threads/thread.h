@@ -26,14 +26,18 @@ typedef int tid_t;
 #define TID_ERROR ((tid_t)-1) /* Error value for tid_t. */
 
 /* Thread priorities. */
-#define PRI_MIN 0      /* Lowest priority. */
+#define PRI_MIN     0  /* Lowest priority. */
 #define PRI_DEFAULT 31 /* Default priority. */
-#define PRI_MAX 63     /* Highest priority. */
+#define PRI_MAX     63 /* Highest priority. */
 
-/** #Advanced Scheduler 자료구조 추가 */
-#define NICE_DEFAULT 0
+/** #Project 1: Advanced Scheduler */
+#define NICE_DEFAULT       0
 #define RECENT_CPU_DEFAULT 0
-#define LOAD_AVG_DEFAULT 0
+#define LOAD_AVG_DEFAULT   0
+
+/** #Project 2: System Call */
+#define FDT_PAGES     3
+#define FDCOUNT_LIMIT FDT_PAGES * (1 << 9)
 
 /* A kernel thread or user process.
  *
@@ -102,16 +106,16 @@ typedef struct thread {
     /* Shared between thread.c and synch.c. */
     struct list_elem elem; /* List element. */
 
-    /** #Alarm Clock */
+    /** #Project 1: Alarm Clock */
     int64_t wakeup_tick; /* 활성화 틱 */
 
-    /** #Priority Donation */
+    /** #Project 1: Priority Donation */
     int original_priority;          /* 기존 Priority */
     struct lock *wait_lock;         /* 대기중인 lock */
     struct list donations;          /* Donation List. */
     struct list_elem donation_elem; /* Donation Element. */
 
-    /** #Advanced Scheduler */
+    /** #Project 1: Advanced Scheduler */
     int niceness;              /* Niceness. */
     int recent_cpu;            /* 최근 CPU 점유 시간 */
     struct list_elem all_elem; /* 살아있는 모든 Thread 연결 */
@@ -119,6 +123,11 @@ typedef struct thread {
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint64_t *pml4; /* Page map level 4 */
+
+    /** #Project 2: System Call */
+    int exit_status;
+    struct file **fdt;  // 파일 디스크립터 테이블
+    int next_fd;        // 파일 디스크립터 인덱스
 #endif
 #ifdef VM
     /* Table for whole virtual memory owned by thread. */
@@ -135,22 +144,22 @@ typedef struct thread {
    Controlled by kernel command-line option "-o mlfqs". */
 extern bool thread_mlfqs;
 
-/** #Alarm Clock 함수 */
+/** #Project 1: Alarm Clock 함수 */
 void thread_sleep(int64_t ticks);
 void thread_awake(int64_t ticks);
 void update_next_tick_to_awake(int64_t ticks);
 int64_t get_next_tick_to_awake(void);
 
-/** #Priority Scheduling 함수 */
+/** #Project 1: Priority Scheduling 함수 */
 void test_max_priority(void);
 bool cmp_priority(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED);
 
-/** #Priority Donation 함수  */
+/** #Project 1: Priority Donation 함수  */
 void donate_priority(void);
 void remove_with_lock(struct lock *lock);
 void refresh_priority(void);
 
-/** #Advance Scheduler 함수 */
+/** #Project 1: Advance Scheduler 함수 */
 void mlfqs_priority(struct thread *t);
 void mlfqs_recent_cpu(struct thread *t);
 void mlfqs_load_avg(void);
