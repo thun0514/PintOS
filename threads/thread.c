@@ -213,6 +213,16 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
     t->tf.cs = SEL_KCSEG;
     t->tf.eflags = FLAG_IF;
 
+    /** #Project 2: System Call - File Descriptor 초기화 */
+    t->fdt = palloc_get_multiple(PAL_ZERO, FDT_PAGES);
+    if (t->fdt == NULL)
+        return TID_ERROR;
+
+    t->fd_idx = 3;
+    t->fdt[0] = 0;  // stdin 예약된 자리 (dummy)
+    t->fdt[1] = 1;  // stdout 예약된 자리 (dummy)
+    t->fdt[2] = 2;  // stderr 예약된 자리 (dummy)
+
     /* Add to run queue. */
     thread_unblock(t);
 
