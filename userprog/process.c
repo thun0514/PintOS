@@ -169,11 +169,11 @@ int process_exec(void *f_name) {
     /* We first kill the current context */
     process_cleanup();
 
-    /** #Command Line Parsing - 문자열 분리 */
+    /** #Project 1: Command Line Parsing - 문자열 분리 */
     char *ptr, *arg;
     int arg_cnt = 0;
     char *arg_list[32];
-    
+
     for (arg = strtok_r(file_name, " ", &ptr); arg != NULL; arg = strtok_r(NULL, " ", &ptr))
         arg_list[arg_cnt++] = arg;
 
@@ -187,7 +187,7 @@ int process_exec(void *f_name) {
     if (!success)
         return -1;
 
-    /** #Command Line Parsing - 디버깅용 툴 */
+    /** #Project 1: Command Line Parsing - 디버깅용 툴 */
     hex_dump(if_.rsp, if_.rsp, USER_STACK - if_.rsp, true);
 
     /* Start switched process. */
@@ -217,6 +217,13 @@ void process_exit(void) {
      * TODO: Implement process termination message (see
      * TODO: project2/process_termination.html).
      * TODO: We recommend you to implement process resource cleanup here. */
+
+    /** #Project 2: System Call - FDT 비우기 */
+    for (int fd = 0; fd < curr->fd_idx; fd++)
+        close(fd);
+
+    palloc_free_multiple(curr->fdt, FDT_PAGES);
+    /** ------------------------------------ */
 
     process_cleanup();
 }
@@ -263,14 +270,14 @@ void process_activate(struct thread *next) {
 /* ELF types.  See [ELF1] 1-2. */
 #define EI_NIDENT 16
 
-#define PT_NULL 0           /* Ignore. */
-#define PT_LOAD 1           /* Loadable segment. */
-#define PT_DYNAMIC 2        /* Dynamic linking info. */
-#define PT_INTERP 3         /* Name of dynamic loader. */
-#define PT_NOTE 4           /* Auxiliary info. */
-#define PT_SHLIB 5          /* Reserved. */
-#define PT_PHDR 6           /* Program header table. */
-#define PT_STACK 0x6474e551 /* Stack segment. */
+#define PT_NULL    0          /* Ignore. */
+#define PT_LOAD    1          /* Loadable segment. */
+#define PT_DYNAMIC 2          /* Dynamic linking info. */
+#define PT_INTERP  3          /* Name of dynamic loader. */
+#define PT_NOTE    4          /* Auxiliary info. */
+#define PT_SHLIB   5          /* Reserved. */
+#define PT_PHDR    6          /* Program header table. */
+#define PT_STACK   0x6474e551 /* Stack segment. */
 
 #define PF_X 1 /* Executable. */
 #define PF_W 2 /* Writable. */
@@ -307,7 +314,7 @@ struct ELF64_PHDR {
 };
 
 /* Abbreviations */
-#define ELF ELF64_hdr
+#define ELF  ELF64_hdr
 #define Phdr ELF64_PHDR
 
 static bool setup_stack(struct intr_frame *if_);
@@ -615,7 +622,7 @@ static bool setup_stack(struct intr_frame *if_) {
 }
 #endif /* VM */
 
-/** #Command Line Parsing - 유저 스택에 파싱된 토큰을 저장하는 함수 */
+/** #Project 2: Command Line Parsing - 유저 스택에 파싱된 토큰을 저장하는 함수 */
 void argument_stack(char **argv, int argc, struct intr_frame *if_) {
     char *arg_addr[100];
     int argv_len;
