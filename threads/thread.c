@@ -202,6 +202,19 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
     init_thread(t, name, priority);
     tid = t->tid = allocate_tid();
 
+    /** #Project 2: System Call - 구조체 초기화 */
+    t->fdt = palloc_get_multiple(PAL_ZERO, FDT_PAGES);
+    if (t->fdt == NULL)
+        return TID_ERROR;
+
+    t->exit_status = 0;  // exit_status 초기화
+
+    t->fd_idx = 3;
+    t->fdt[0] = 0;  // stdin 예약된 자리 (dummy)
+    t->fdt[1] = 1;  // stdout 예약된 자리 (dummy)
+    t->fdt[2] = 2;  // stderr 예약된 자리 (dummy)
+    /** ---------------------------------------- */
+
     /** #Project 2: System Call - 현재 스레드의 자식 리스트에 추가 */
     list_push_back(&thread_current()->child_list, &t->child_elem);
 
@@ -215,26 +228,6 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
     t->tf.ss = SEL_KDSEG;
     t->tf.cs = SEL_KCSEG;
     t->tf.eflags = FLAG_IF;
-
-    /** #Project 2: System Call - 구조체 초기화 */
-    t->fdt = palloc_get_multiple(PAL_ZERO, FDT_PAGES);
-    if (t->fdt == NULL)
-        return TID_ERROR;
-
-    t->exit_status = 0;  // exit_status 초기화
-
-    t->fd_idx = 3;
-    t->fdt[0] = 0;  // stdin 예약된 자리 (dummy)
-    t->fdt[1] = 1;  // stdout 예약된 자리 (dummy)
-    t->fdt[2] = 2;  // stderr 예약된 자리 (dummy)
-
-    t->runn_file = NULL;
-
-    list_init(&t->child_list);
-    sema_init(&t->fork_sema, 0);
-    sema_init(&t->exit_sema, 0);
-    sema_init(&t->wait_sema, 0);
-    /** ---------------------------------------- */
 
     /* Add to run queue. */
     thread_unblock(t);
@@ -481,6 +474,13 @@ static void init_thread(struct thread *t, const char *name, int priority) {
     t->original_priority = t->priority;
     t->niceness = NICE_DEFAULT;
     t->recent_cpu = RECENT_CPU_DEFAULT;
+    
+    t->runn_file = NULL;
+
+    list_init(&t->child_list);
+    sema_init(&t->fork_sema, 0);
+    sema_init(&t->exit_sema, 0);
+    sema_init(&t->wait_sema, 0);
 }
 
 /* Chooses and returns the next thread to be scheduled.  Should
