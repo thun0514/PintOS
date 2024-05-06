@@ -203,8 +203,6 @@ int filesize(int fd) {
 }
 
 int read(int fd, void *buffer, unsigned length) {
-    check_address(buffer);
-
     if (fd == 0) {  // 0(stdin) -> keyboard로 직접 입력
         int i = 0;  // 쓰레기 값 return 방지
         char c;
@@ -237,7 +235,7 @@ int read(int fd, void *buffer, unsigned length) {
 }
 
 int write(int fd, const void *buffer, unsigned length) {
-    check_address(buffer);
+    // check_address(buffer);
 
     struct file *file = process_get_file(fd);
     off_t bytes = -1;
