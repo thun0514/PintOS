@@ -134,7 +134,7 @@ void syscall_handler(struct intr_frame *f UNUSED) {
 }
 
 void check_address(void *addr) {
-    if (!is_user_vaddr(addr) || addr == NULL)
+    if (is_kernel_vaddr(addr) || addr == NULL || pml4_get_page(thread_current()->pml4, addr) == NULL)
         exit(-1);
 }
 
@@ -180,7 +180,7 @@ int wait(pid_t tid) {
 }
 
 bool create(const char *file, unsigned initial_size) {
-    // check_address(file);
+    check_address(file);
 
     return filesys_create(file, initial_size);
 }
@@ -216,6 +216,8 @@ int filesize(int fd) {
 }
 
 int read(int fd, void *buffer, unsigned length) {
+    check_address(buffer);
+
     if (fd == 0) {  // 0(stdin) -> keyboard로 직접 입력
         int i = 0;  // 쓰레기 값 return 방지
         char c;
@@ -248,7 +250,7 @@ int read(int fd, void *buffer, unsigned length) {
 }
 
 int write(int fd, const void *buffer, unsigned length) {
-    // check_address(buffer);
+    check_address(buffer);
 
     struct file *file = process_get_file(fd);
     off_t bytes = -1;
