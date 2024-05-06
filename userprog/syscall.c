@@ -134,7 +134,7 @@ void syscall_handler(struct intr_frame *f UNUSED) {
 }
 
 void check_address(void *addr) {
-    if (is_user_vaddr(addr))
+    if (!is_user_vaddr(addr) || addr == NULL)
         exit(-1);
 }
 
@@ -180,7 +180,7 @@ int wait(pid_t tid) {
 }
 
 bool create(const char *file, unsigned initial_size) {
-    check_address(file);
+    // check_address(file);
 
     return filesys_create(file, initial_size);
 }
