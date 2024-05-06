@@ -197,25 +197,27 @@ int process_exec(void *f_name) {
     /* We first kill the current context */
     process_cleanup();
 
-    /** #Project 1: Command Line Parsing - 문자열 분리 */
+    /** #Project 2: Command Line Parsing - 문자열 분리 */
     char *ptr, *arg;
-    int arg_cnt = 0;
-    char *arg_list[32];
+    int argc = 0;
+    char *argv[64];
 
     for (arg = strtok_r(file_name, " ", &ptr); arg != NULL; arg = strtok_r(NULL, " ", &ptr))
-        arg_list[arg_cnt++] = arg;
+        argv[argc++] = arg;
+
+    argv[argc] = arg;
 
     /* And then load the binary */
     success = load(file_name, &if_);
 
-    argument_stack(arg_list, arg_cnt, &if_);
+    argument_stack(argv, argc, &if_);
 
     /* If load failed, quit. */
     palloc_free_page(file_name);
     if (!success)
         return -1;
 
-    /** #Project 1: Command Line Parsing - 디버깅용 툴 */
+    /** #Project 2: Command Line Parsing - 디버깅용 툴 */
     // hex_dump(if_.rsp, if_.rsp, USER_STACK - if_.rsp, true);
 
     /* Start switched process. */
@@ -384,6 +386,10 @@ static bool load(const char *file_name, struct intr_frame *if_) {
         goto done;
     }
 
+    /** #Project 2: System Call - 파일 실행 명시 및 접근 금지 설정  */
+    t->runn_file = file;
+    file_deny_write(file); /** #Project 2: Denying Writes to Executables */
+
     /* Read and verify executable header. */
     if (file_read(file, &ehdr, sizeof ehdr) != sizeof ehdr || memcmp(ehdr.e_ident, "\177ELF\2\1\1", 7) || ehdr.e_type != 2 || ehdr.e_machine != 0x3E  // amd64
         || ehdr.e_version != 1 || ehdr.e_phentsize != sizeof(struct Phdr) || ehdr.e_phnum > 1024) {
@@ -448,14 +454,14 @@ static bool load(const char *file_name, struct intr_frame *if_) {
     /* Start address. */
     if_->rip = ehdr.e_entry;
 
-    /* TODO: Your code goes here.
-     * TODO: Implement argument passing (see project2/argument_passing.html). */
-
     success = true;
 
 done:
     /* We arrive here whether the load is successful or not. */
-    file_close(file);
+    // file_close(file);
+    /** #Project 2: Denying Writes to Executables - allow write  */
+    file_allow_write(file);
+
     return success;
 }
 
@@ -672,7 +678,7 @@ void argument_stack(char **argv, int argc, struct intr_frame *if_) {
         arg_addr[i] = if_->rsp;
     }
 
-    while (!(if_->rsp % 8))
+    while (if_->rsp % 8)
         *(uint8_t *)(--if_->rsp) = 0;
 
     for (int i = argc; i >= 0; i--) {
