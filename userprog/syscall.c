@@ -124,7 +124,10 @@ void halt(void) {
 void exit(int status) {
     thread_t *t = thread_current();
     t->exit_status = status;
-    printf("%s: exit(%d)\n", t->name, t->exit_status);
+
+    /** #Project 2: Process Termination Messages */
+    printf("%s: exit(%d)\n", t->name, t->exit_status);  
+
     thread_exit();
 }
 
@@ -260,7 +263,7 @@ void close(int fd) {
     if (fd < 3 || file == NULL)
         return;
 
-    process_close_file(fd); 
+    process_close_file(fd);
 
     file_close(file);
 }
