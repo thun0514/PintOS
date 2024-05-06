@@ -653,3 +653,17 @@ void argument_stack(char **argv, int argc, struct intr_frame *if_) {
     if_->R.rdi = argc;
     if_->R.rsi = if_->rsp + 8;
 }
+
+thread_t *get_child_process(int pid) {
+    thread_t *curr = thread_current();
+    thread_t *t;
+
+    for (struct list_elem *e = list_begin(&curr->child_list); e != list_end(&curr->child_list); e = list_next(e)) {
+        t = list_entry(e, thread_t, child_elem);
+
+        if (pid == t->tid)
+            return t;
+    }
+
+    return NULL;
+}
