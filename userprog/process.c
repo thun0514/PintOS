@@ -78,7 +78,7 @@ static void initd(void *f_name) {
 tid_t process_fork(const char *name, struct intr_frame *if_ UNUSED) {
     thread_t *curr = thread_current();
 
-    memcpy(&curr->parent_if, if_, sizeof(struct intr_frame));  // 부모의 인터럽트 프레임을 찾기 위해 if_ 복제
+    memcpy(&curr->parent_if, if_, sizeof(struct intr_frame));  // 1. 부모를 찾기 위해서 2. do_fork에 전달해주기 위해서
 
     /* 현재 스레드를 새 스레드로 복제합니다.*/
     tid_t tid = thread_create(name, PRI_DEFAULT, __do_fork, curr);
@@ -127,17 +127,17 @@ static bool duplicate_pte(uint64_t *pte, void *va, void *aux) {
 }
 #endif
 
-/* A thread function that copies parent's execution context.
- * Hint) parent->tf does not hold the userland context of the process.
- *       That is, you are required to pass second argument of process_fork to
- *       this function. */
+/** #Project 2: System Call - 부모의 실행 컨텍스트를 복사하는 스레드 함수입니다.
+ *  Hint) parent->tf는 프로세스의 사용자 영역 컨텍스트를 보유하지 않습니다.
+ *       즉, process_fork의 두 번째 인수를 이 함수에 전달해야 합니다.
+ */
 static void __do_fork(void *aux) {
     struct intr_frame if_;
     struct thread *parent = (struct thread *)aux;
     struct thread *current = thread_current();
-    /* TODO: somehow pass the parent_if. (i.e. process_fork()'s if_) */
-    struct intr_frame *parent_if;
     bool succ = true;
+    /* TODO: somehow pass the parent_if. (i.e. process_fork()'s if_) */
+    struct intr_frame *parent_if = &current->parent_if;
 
     /* 1. Read the cpu context to local stack. */
     memcpy(&if_, parent_if, sizeof(struct intr_frame));
@@ -153,23 +153,31 @@ static void __do_fork(void *aux) {
     if (!supplemental_page_table_copy(&current->spt, &parent->spt))
         goto error;
 #else
-    if (!pml4_for_each(parent->pml4, duplicate_pte, parent))
+    if (!pml4_for_each(parent->pml4, duplicate_pte, parent))  // Page Table 통째로 복제
         goto error;
 #endif
 
     /* TODO: Your code goes here.
-     * TODO: Hint) To duplicate the file object, use `file_duplicate`
-     * TODO:       in include/filesys/file.h. Note that parent should not return
-     * TODO:       from the fork() until this function successfully duplicates
-     * TODO:       the resources of parent.*/
+     * TODO: Hint) 파일 객체를 복제하려면 include/filesys/file.h에서 `file_duplicate`를 사용하세요.
+         이 함수가 부모의 리소스를 성공적으로 복제할 때까지 부모는 fork()에서 반환되어서는 안 됩니다. */
+    if (parent->fd_idx >= FDCOUNT_LIMIT)
+        goto error;
+
+    current->fd_idx = parent->fd_idx;  // fdt 및 idx 복제
+    for (int fd = 3; fd < parent->fd_idx; fd++)
+        current->fdt[fd] = file_duplicate(parent->fdt[fd]);
+
+    sema_up(&current->fork_sema);  // fork 프로세스가 정상적으로 완료됐으므로 부모를 다시 실행 가능상태로 전환
 
     process_init();
 
     /* Finally, switch to the newly created process. */
     if (succ)
-        do_iret(&if_);
+        do_iret(&if_);  // 정상 종료 시 자식 Process를 수행하러 감
+
 error:
-    thread_exit();
+    sema_up(&parent->fork_sema);  // 복제에 실패했으므로 부모 process 강제 기상
+    exit(TID_ERROR);
 }
 
 /* Switch the current execution context to the f_name.
