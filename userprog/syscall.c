@@ -11,9 +11,12 @@
 #include "userprog/gdt.h"
 
 /** #Project 2: System Call */
+#include <string.h>
+
 #include "filesys/file.h"
 #include "filesys/filesys.h"
 #include "threads/mmu.h"
+#include "threads/palloc.h"
 #include "userprog/process.h"
 /** -----------------------  */
 
@@ -33,7 +36,7 @@ void check_address(void *addr);
 void halt(void);
 void exit(int status);
 pid_t fork(const char *thread_name, struct intr_frame *f);
-int exec(const char *file);
+int exec(const char *cmd_line);
 int wait(pid_t);
 bool create(const char *file, unsigned initial_size);
 bool remove(const char *file);
@@ -156,10 +159,21 @@ pid_t fork(const char *thread_name, struct intr_frame *f) {
     return process_fork(thread_name, f);
 }
 
-int exec(const char *file) {
-    check_address(file);
+int exec(const char *cmd_line) {
+    check_address(cmd_line);
 
-    return process_exec(file);
+    off_t size = strlen(cmd_line) + 1;
+    char *cmd_copy = palloc_get_page(PAL_ZERO);
+
+    if (cmd_copy == NULL)
+        exit(-1);
+
+    memcpy(cmd_copy, cmd_line, size);
+
+    if (process_exec(cmd_copy) == -1)
+        return -1;
+
+    return 0;  // process_exec 성공시 리턴 값 없음 (do_iret)
 }
 
 int wait(pid_t tid) {
