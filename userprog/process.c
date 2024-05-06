@@ -141,6 +141,7 @@ static void __do_fork(void *aux) {
 
     /* 1. Read the cpu context to local stack. */
     memcpy(&if_, parent_if, sizeof(struct intr_frame));
+    if_.R.rax = 0;  // 자식 프로세스의 return값 (0)
 
     /* 2. Duplicate PT */
     current->pml4 = pml4_create();
@@ -215,44 +216,54 @@ int process_exec(void *f_name) {
         return -1;
 
     /** #Project 1: Command Line Parsing - 디버깅용 툴 */
-    hex_dump(if_.rsp, if_.rsp, USER_STACK - if_.rsp, true);
+    // hex_dump(if_.rsp, if_.rsp, USER_STACK - if_.rsp, true);
 
     /* Start switched process. */
     do_iret(&if_);
     NOT_REACHED();
 }
 
-/* 스레드 TID가 종료될 때까지 기다리고 종료 상태를 반환합니다. 커널에 의해 종료된 경우
- * (즉, 예외로 인해 종료된 경우) -1을 반환합니다. TID가 유효하지 않거나 호출 프로세스의
- * 하위 프로세스가 아니거나 주어진 TID에 대해 process_wait()가 이미 성공적으로 호출된
- * 경우 기다리지 않고 즉시 -1을 반환합니다.
- *
- * 이 기능은 문제 2-2에서 구현될 것입니다. 지금은 아무것도 하지 않습니다. */
+/** #Project 2: System Call - 스레드 TID가 종료될 때까지 기다리고 종료 상태를 반환합니다.
+ *  커널에 의해 종료된 경우 (즉, 예외로 인해 종료된 경우) -1을 반환합니다. TID가 유효하지
+ *  않거나 호출 프로세스의 하위 프로세스가 아니거나 주어진 TID에 대해 process_wait()가
+ *  이미 성공적으로 호출된 경우 기다리지 않고 즉시 -1을 반환합니다.
+ */
 int process_wait(tid_t child_tid UNUSED) {
-    /* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
-     * XXX:       to add infinite loop here before
-     * XXX:       implementing the process_wait. */
-    for (int i = 0; i < 10000000000; i++)
-        ;
-    return -1;
+    /* XXX: Hint) process_wait(initd)인 경우 pintos가 종료됩니다. process_wait를 구현하기
+       전에 여기에 무한 루프를 추가하는 것이 좋습니다. */
+    thread_t *child = get_child_process(child_tid);
+    if (child == NULL)
+        return -1;
+
+    sema_down(&child->wait_sema);  // 자식 프로세스가 종료될 때 까지 대기.
+
+    int exit_status = child->exit_status;
+    list_remove(&child->child_elem);
+
+    sema_up(&child->exit_sema);
+
+    return exit_status;
 }
 
-/* Exit the process. This function is called by thread_exit (). */
+/** #Project 2: System Call - Exit the process. This function is called by thread_exit (). */
 void process_exit(void) {
-    struct thread *curr = thread_current();
+    thread_t *curr = thread_current();
     /* TODO: Your code goes here.
      * TODO: Implement process termination message (see
      * TODO: project2/process_termination.html).
      * TODO: We recommend you to implement process resource cleanup here. */
 
-    /** #Project 2: System Call - FDT 비우기 */
-    for (int fd = 0; fd < curr->fd_idx; fd++)
+    for (int fd = 0; fd < curr->fd_idx; fd++)  // FDT 비우기
         close(fd);
 
+    file_close(curr->runn_file);  // 현재 프로세스가 실행중인 파일 종료
+
     palloc_free_multiple(curr->fdt, FDT_PAGES);
-    /** ------------------------------------ */
 
     process_cleanup();
+
+    sema_up(&curr->wait_sema);    // 자식 프로세스가 종료될 때까지 대기
+    sema_down(&curr->exit_sema);  // 자식 프로세스의 종료상태를 받을 때까지 대기
 }
 
 /* Free the current process's resources. */
