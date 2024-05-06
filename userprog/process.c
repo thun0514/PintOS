@@ -52,6 +52,14 @@ tid_t process_create_initd(const char *file_name) {
         return TID_ERROR;
     strlcpy(fn_copy, file_name, PGSIZE);
 
+    /** Project2: for Test Case - 직접 프로그램을 실행할 때에는 이 함수를 사용하지 않지만 make check에서
+     *  이 함수를 통해 process_create를 실행하기 때문에 이 부분을 수정해주지 않으면 Test Case의 Thread_name이
+     *  커맨드 라인 전체로 바뀌게 되어 Pass할 수 없다.
+     */
+    char *ptr;
+    strtok_r(file_name, " ", &ptr);
+    /** --------------------------------------------------------------------------------------------- */
+
     /* FILE_NAME을 실행할 새 스레드를 만듭니다. */
     tid = thread_create(file_name, PRI_DEFAULT, initd, fn_copy);
     if (tid == TID_ERROR)
@@ -204,8 +212,6 @@ int process_exec(void *f_name) {
 
     for (arg = strtok_r(file_name, " ", &ptr); arg != NULL; arg = strtok_r(NULL, " ", &ptr))
         argv[argc++] = arg;
-
-    argv[argc] = arg;
 
     /* And then load the binary */
     success = load(file_name, &if_);
@@ -681,12 +687,12 @@ void argument_stack(char **argv, int argc, struct intr_frame *if_) {
     while (if_->rsp % 8)
         *(uint8_t *)(--if_->rsp) = 0;
 
-    for (int i = argc; i >= 0; i--) {
-        if_->rsp = if_->rsp - 8;
-        if (i == argc)
-            memset(if_->rsp, 0, sizeof(char **));
-        else
-            memcpy(if_->rsp, &arg_addr[i], sizeof(char **));
+    if_->rsp -= 8;
+    memset(if_->rsp, 0, sizeof(char *));
+
+    for (int i = argc - 1; i >= 0; i--) {
+        if_->rsp -= 8;
+        memcpy(if_->rsp, &arg_addr[i], sizeof(char *));
     }
 
     if_->rsp = if_->rsp - 8;
