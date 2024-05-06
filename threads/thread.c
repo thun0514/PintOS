@@ -218,10 +218,13 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
     if (t->fdt == NULL)
         return TID_ERROR;
 
+    t->exit_status = 0; // exit_status 초기화
+
     t->fd_idx = 3;
     t->fdt[0] = 0;  // stdin 예약된 자리 (dummy)
     t->fdt[1] = 1;  // stdout 예약된 자리 (dummy)
     t->fdt[2] = 2;  // stderr 예약된 자리 (dummy)
+    /** ----------------------------------------------  */
 
     /* Add to run queue. */
     thread_unblock(t);
