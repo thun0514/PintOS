@@ -131,7 +131,6 @@ void syscall_handler(struct intr_frame *f UNUSED) {
         default:
             exit(-1);
     }
-    thread_exit();
 }
 
 void check_address(void *addr) {
