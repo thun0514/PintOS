@@ -70,7 +70,7 @@ void syscall_handler(struct intr_frame *f UNUSED) {
             exit(f->R.rdi);
             break;
         case SYS_FORK:
-            fork(f->R.rdi);
+            fork(f->R.rdi, f);
             break;
         case SYS_EXEC:
             exec(f->R.rdi);
@@ -122,17 +122,19 @@ void halt(void) {
 }
 
 void exit(int status) {
-    thread_t *t = thread_current();
-    t->exit_status = status;
+    thread_t *curr = thread_current();
+    curr->exit_status = status;
 
     /** #Project 2: Process Termination Messages */
-    printf("%s: exit(%d)\n", t->name, t->exit_status);  
+    printf("%s: exit(%d)\n", curr->name, curr->exit_status);  
 
     thread_exit();
 }
 
-pid_t fork(const char *thread_name) {
-    return process_fork(thread_name, NULL);
+pid_t fork(const char *thread_name, struct intr_frame *f) {
+    check_address(thread_name);
+    
+    return process_fork(thread_name, f);
 }
 
 int exec(const char *file) {
