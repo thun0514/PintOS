@@ -24,8 +24,27 @@ static int process_add_file(struct file *f);
 static struct file *process_get_file(int fd);
 static int process_close_file(int fd);
 
-/** #Project 2: System Call - 파일 읽기/쓰기 용 lock */
-struct lock filesys_lock;
+/** #Project 2: System Call */
+struct lock filesys_lock;  // 파일 읽기/쓰기 용 lock
+typedef int pid_t;         // 충돌 방지
+
+void check_address(void *addr);
+
+void halt(void);
+void exit(int status);
+pid_t fork(const char *thread_name, struct intr_frame *f);
+int exec(const char *file);
+int wait(pid_t);
+bool create(const char *file, unsigned initial_size);
+bool remove(const char *file);
+int open(const char *file);
+int filesize(int fd);
+int read(int fd, void *buffer, unsigned length);
+int write(int fd, const void *buffer, unsigned length);
+void seek(int fd, unsigned position);
+int tell(int fd);
+void close(int fd);
+/** ------------------------ */
 
 /* System call.
  *
@@ -126,14 +145,14 @@ void exit(int status) {
     curr->exit_status = status;
 
     /** #Project 2: Process Termination Messages */
-    printf("%s: exit(%d)\n", curr->name, curr->exit_status);  
+    printf("%s: exit(%d)\n", curr->name, curr->exit_status);
 
     thread_exit();
 }
 
 pid_t fork(const char *thread_name, struct intr_frame *f) {
     check_address(thread_name);
-    
+
     return process_fork(thread_name, f);
 }
 
@@ -226,13 +245,10 @@ int write(int fd, const void *buffer, unsigned length) {
     if (fd == 0 || file == NULL)
         return -1;
 
-    if (fd == 1) {  // 1(stdout) -> console로 출력
+    if (fd < 3) {  // 1(stdout) * 2(stderr) -> console로 출력
         putbuf(buffer, length);
         return length;
     }
-
-    if (fd == 2)  // Error Stream TBD
-        return -1;
 
     lock_acquire(&filesys_lock);
     bytes = file_write(file, buffer, length);
