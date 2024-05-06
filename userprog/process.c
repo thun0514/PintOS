@@ -72,11 +72,28 @@ static void initd(void *f_name) {
     NOT_REACHED();
 }
 
-/* 현재 프로세스를 `name`으로 복제합니다. 새 프로세스의 스레드 ID를 반환하거나
- * 스레드를 생성할 수 없는 경우 TID_ERROR를 반환합니다. */
+/** #Project 2: System Call - 현재 프로세스를 `name`으로 복제합니다. 새 프로세스의
+ * 스레드 ID를 반환하거나 스레드를 생성할 수 없는 경우 TID_ERROR를 반환합니다.
+ */
 tid_t process_fork(const char *name, struct intr_frame *if_ UNUSED) {
+    thread_t *curr = thread_current();
+
+    memcpy(&curr->parent_if, if_, sizeof(struct intr_frame));  // 부모의 인터럽트 프레임을 찾기 위해 if_ 복제
+
     /* 현재 스레드를 새 스레드로 복제합니다.*/
-    return thread_create(name, PRI_DEFAULT, __do_fork, thread_current());
+    tid_t tid = thread_create(name, PRI_DEFAULT, __do_fork, curr);
+
+    if (tid == TID_ERROR)
+        return TID_ERROR;
+
+    thread_t *child = get_child_process(tid);
+
+    sema_down(&child->fork_sema);  // 자식 프로세스가 fork_sema를 sema_up 해줄 때까지 대기
+
+    if (child->exit_status == TID_ERROR)
+        return TID_ERROR;
+
+    return tid;  // 부모 프로세스의 리턴값 : 생성한 자식 프로세스의 tid
 }
 
 #ifndef VM
