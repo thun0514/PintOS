@@ -27,7 +27,7 @@
    Do not modify this value. */
 #define THREAD_BASIC 0xd42df210
 
-/** #Alarm Clock 전역 변수 */
+/** #Project 1: Alarm Clock 전역 변수 */
 static struct list sleep_list;
 static int64_t next_tick_to_awake;
 
@@ -35,7 +35,7 @@ static int64_t next_tick_to_awake;
    that are ready to run but not actually running. */
 static struct list ready_list;
 
-/** #Advanced Scheduler */
+/** #Project 1: Advanced Scheduler */
 static struct list all_list;
 
 /* Idle thread. */
@@ -59,7 +59,7 @@ static long long user_ticks;   /* # of timer ticks in user programs. */
 #define TIME_SLICE 4          /* # of timer ticks to give each thread. */
 static unsigned thread_ticks; /* # of timer ticks since last yield. */
 
-/** #Advanced Scheduler */
+/** #Project 1: Advanced Scheduler */
 int load_avg;
 
 /* If false (default), use round-robin scheduler.
@@ -115,10 +115,10 @@ void thread_init(void) {
     list_init(&ready_list);
     list_init(&destruction_req);
 
-    /** #Alarm Clock sleep list 초기화 */
+    /** #Project 1: Alarm Clock sleep list 초기화 */
     list_init(&sleep_list);
 
-    /** #Advanced Scheduler all list 초기화 */
+    /** #Project 1: Advanced Scheduler all list 초기화 */
     list_init(&all_list);
 
     /* Set up a thread structure for the running thread. */
@@ -137,7 +137,7 @@ void thread_start(void) {
     sema_init(&idle_started, 0);
     thread_create("idle", PRI_MIN, idle, &idle_started);
 
-    /** #Advanced Scheduler */
+    /** #Project 1: Advanced Scheduler */
     load_avg = LOAD_AVG_DEFAULT;
 
     /* 선점형 스레드 스케줄링 시작. */
@@ -201,7 +201,7 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
     /* Initialize thread. */
     init_thread(t, name, priority);
     tid = t->tid = allocate_tid();
-
+#ifdef USERPROG
     /** #Project 2: System Call - 구조체 초기화 */
     t->fdt = palloc_get_multiple(PAL_ZERO, FDT_PAGES);
     if (t->fdt == NULL)
@@ -217,7 +217,7 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
 
     /** #Project 2: System Call - 현재 스레드의 자식 리스트에 추가 */
     list_push_back(&thread_current()->child_list, &t->child_elem);
-
+#endif
     /* Call the kernel_thread if it scheduled.
      * Note) rdi is 1st argument, and rsi is 2nd argument. */
     t->tf.rip = (uintptr_t)kernel_thread;
@@ -232,7 +232,7 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
     /* Add to run queue. */
     thread_unblock(t);
 
-    /** #Priority Scheduling 새로 생성된 thread의 우선순위가 더 높다면 cpu 인계 */
+    /** #Project 1: Priority Scheduling 새로 생성된 thread의 우선순위가 더 높다면 cpu 인계 */
     if (t->priority > thread_get_priority())
         thread_yield();
 
@@ -268,7 +268,7 @@ void thread_unblock(struct thread *t) {
     old_level = intr_disable();
     ASSERT(t->status == THREAD_BLOCKED);
 
-    /** #Priority Scheduling 우선순위 순으로 정렬되어 list에 삽입 */
+    /** #Project 1: Priority Scheduling 우선순위 순으로 정렬되어 list에 삽입 */
     list_insert_ordered(&ready_list, &t->elem, cmp_priority, NULL);
     // list_push_back(&ready_list, &t->elem);
     t->status = THREAD_READY;
@@ -309,7 +309,7 @@ void thread_exit(void) {
 #ifdef USERPROG
     process_exit();
 #endif
-    /** #Advanced Scheduler 스레드 종료 시 all_list에서 제거 */
+    /** #Project 1: Advanced Scheduler 스레드 종료 시 all_list에서 제거 */
     if (thread_mlfqs)
         list_remove(&thread_current()->all_elem);
 
@@ -330,7 +330,7 @@ void thread_yield(void) {
 
     old_level = intr_disable();
     if (curr != idle_thread)
-        /** #Priority Scheduling 우선순위 순으로 정렬되어 list에 삽입 */
+        /** #Project 1: Priority Scheduling 우선순위 순으로 정렬되어 list에 삽입 */
         list_insert_ordered(&ready_list, &curr->elem, cmp_priority, NULL);
     // list_push_back(&ready_list, &curr->elem);
     do_schedule(THREAD_READY);
@@ -339,16 +339,17 @@ void thread_yield(void) {
 
 /* Sets the current thread's priority to NEW_PRIORITY. */
 void thread_set_priority(int new_priority) {
-    /** #Advanced Scheduler mlfqs 스케줄러 일때 우선순위를 임의로 변경할수 없도록 수정 */
+    /** #Project 1: Advanced Scheduler mlfqs 스케줄러 일때 우선순위를 임의로 변경할수 없도록 수정 */
     if (thread_mlfqs)
         return;
 
-    /** #Priority Donation prioirity 대신 original priority 사용 */
-    thread_current()->original_priority = new_priority;
+    /** #Project 1: Priority Donation */
+    thread_current()->original_priority = new_priority;  // prioirity 대신 original priority 사용
 
-    /** #Priority Donation donation 관련 정보 갱신 및 스케줄링 */
-    refresh_priority();
-    /** #Priority Scheduling 우선순위를 비교하여 스케쥴링 하는 함수 호출 */
+    refresh_priority();  // donation 관련 정보 갱신 및 스케줄링
+    /** ----------------------------- */
+
+    /** #Project 1: Priority Scheduling 우선순위를 비교하여 스케쥴링 하는 함수 호출 */
     test_max_priority();
 }
 
@@ -357,7 +358,7 @@ int thread_get_priority(void) {
     return thread_current()->priority;
 }
 
-/** #Advanced Scheduler 현재 thread의 niceness값을 변경하는 함수 */
+/** #Project 1: Advanced Scheduler 현재 thread의 niceness값을 변경하는 함수 */
 void thread_set_nice(int nice UNUSED) {
     thread_t *t = thread_current();
 
@@ -368,7 +369,7 @@ void thread_set_nice(int nice UNUSED) {
     intr_set_level(old_level);
 }
 
-/** #Advanced Scheduler 현재 thread의 niceness값을 반환하는 함수 */
+/** #Project 1: Advanced Scheduler 현재 thread의 niceness값을 반환하는 함수 */
 int thread_get_nice(void) {
     thread_t *t = thread_current();
 
@@ -379,7 +380,7 @@ int thread_get_nice(void) {
     return nice;
 }
 
-/** #Advanced Scheduler load_avg에 100을 곱해서 반환하는 함수 */
+/** #Project 1: Advanced Scheduler load_avg에 100을 곱해서 반환하는 함수 */
 int thread_get_load_avg(void) {
     enum intr_level old_level = intr_disable();
     int load_avg_val = fp_to_int_round(mult_mixed(load_avg, 100));  // 출력시 소수 2번째 자리까지 출력하기 위함
@@ -457,11 +458,11 @@ static void init_thread(struct thread *t, const char *name, int priority) {
     t->tf.rsp = (uint64_t)t + PGSIZE - sizeof(void *);
 
     if (thread_mlfqs) {
-        /** #Advanced Scheduler 자료구조 초기화 */
+        /** #Project 1: Advanced Scheduler 자료구조 초기화 */
         mlfqs_priority(t);
         list_push_back(&all_list, &t->all_elem);
     } else {
-        /** #Priority Donation 자료구조 초기화 */
+        /** #Project 1: Priority Donation 자료구조 초기화 */
         t->priority = priority;
     }
 
@@ -470,17 +471,21 @@ static void init_thread(struct thread *t, const char *name, int priority) {
 
     t->magic = THREAD_MAGIC;
 
-    /** #Advanced Scheduler */
+    /** #Project 1: Advanced Scheduler */
     t->original_priority = t->priority;
     t->niceness = NICE_DEFAULT;
     t->recent_cpu = RECENT_CPU_DEFAULT;
-    
+
+#ifdef USERPROG
+    /** #Project 2: System Call  */
     t->runn_file = NULL;
 
     list_init(&t->child_list);
     sema_init(&t->fork_sema, 0);
     sema_init(&t->exit_sema, 0);
     sema_init(&t->wait_sema, 0);
+    /** -----------------------  */
+#endif
 }
 
 /* Chooses and returns the next thread to be scheduled.  Should
@@ -661,73 +666,72 @@ static tid_t allocate_tid(void) {
     return tid;
 }
 
-/** #Alarm Clock 쓰레드 비활성화 함수 */
+/** #Project 1: Alarm Clock 쓰레드 비활성화 함수 */
 void thread_sleep(int64_t ticks) {
-    thread_t *this;
-    this = thread_current();
+    thread_t *curr = thread_current();
 
-    if (this == idle_thread) {  // idle -> stop
+    if (curr == idle_thread) {  // idle -> stop
         ASSERT(0);
     } else {
         enum intr_level old_level;
         old_level = intr_disable();  // pause interrupt
 
-        update_next_tick_to_awake(this->wakeup_tick = ticks);  // update awake ticks
+        update_next_tick_to_awake(curr->wakeup_tick = ticks);  // update awake ticks
 
-        list_push_back(&sleep_list, &this->elem);  // push to sleep_list
+        list_push_back(&sleep_list, &curr->elem);  // push to sleep_list
 
         thread_block();  // block this thread
 
         intr_set_level(old_level);  // continue interrupt
     }
 }
-/** #Alarm Clock 쓰레드 활성화 함수 */
+/** #Project 1: Alarm Clock 쓰레드 활성화 함수 */
 void thread_awake(int64_t wakeup_tick) {
     next_tick_to_awake = INT64_MAX;
 
-    struct list_elem *sleeping;
-    sleeping = list_begin(&sleep_list);  // take sleeping thread
+    struct list_elem *sleeping = list_begin(&sleep_list);  // take sleeping thread
+    thread_t *th;
 
     while (sleeping != list_end(&sleep_list)) {  // for all sleeping threads
-        thread_t *th = list_entry(sleeping, thread_t, elem);
+        th = list_entry(sleeping, thread_t, elem);
 
         if (wakeup_tick >= th->wakeup_tick) {
             sleeping = list_remove(&th->elem);  // delete thread
             thread_unblock(th);                 // unblock thread
         } else {
-            sleeping = list_next(sleeping);              // move to next sleeping thread
             update_next_tick_to_awake(th->wakeup_tick);  // update wakeup_tick
+            sleeping = list_next(sleeping);              // move to next sleeping thread
         }
     }
 }
 
-/** #Alarm Clock 다음 활성화 tick 갱신 함수 */
+/** #Project 1: Alarm Clock 다음 활성화 tick 갱신 함수 */
 void update_next_tick_to_awake(int64_t ticks) {
     next_tick_to_awake = (next_tick_to_awake > ticks) ? ticks : next_tick_to_awake;
 }
 
-/** #Alarm Clock 현재 next_tick_to_awake 값 리턴 함수 */
+/** #Project 1: Alarm Clock 현재 next_tick_to_awake 값 리턴 함수 */
 int64_t get_next_tick_to_awake(void) {
     return next_tick_to_awake;
 }
 
-/** #Priority Scheduling ready_list에서 우선 순위가 가장 높은 쓰레드와 현재 쓰레드의 우선 순위를 비교 */
+/** #Project 1: Priority Scheduling ready_list에서 우선 순위가 가장 높은 쓰레드와 현재 쓰레드의 우선 순위를 비교 */
 void test_max_priority(void) {
     if (list_empty(&ready_list))
         return;
 
     thread_t *th = list_entry(list_front(&ready_list), thread_t, elem);
 
-    if (thread_get_priority() < th->priority) {
-        /** Project 2 Panic 방지 */
-        if (intr_context)
-            return;
-
-        thread_yield();
+    if (thread_current()->priority < th->priority) {
+        /** Project 2: Panic 방지 */
+        if (intr_context())
+            intr_yield_on_return();
+        else
+            thread_yield();
     }
 }
 
-/** #Priority Scheduling 첫번째 인자의 우선순위가 높으면 1, 아니면 0 */
+/** #Project 1: Priority Scheduling 첫번째 인자의 우선순위가 높으면 1, 아니면 0 */
 bool cmp_priority(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED) {
     thread_t *thread_a = list_entry(a, thread_t, elem);
     thread_t *thread_b = list_entry(b, thread_t, elem);
@@ -738,8 +742,8 @@ bool cmp_priority(const struct list_elem *a, const struct list_elem *b, void *au
     return thread_a->priority > thread_b->priority;
 }
 
-/** #Priority Donation 현재 쓰레드가 기다리고 있는 lock과 연결된 모든 쓰레드들을 순회하며
-    현재 쓰레드의 우선순위를 lock을 보유하고 있는 쓰레드에게 기부한다. */
+/** #Project 1: Priority Donation 현재 쓰레드가 기다리고 있는 lock과 연결된 모든 쓰레드들을 순회하며
+ *  현재 쓰레드의 우선순위를 lock을 보유하고 있는 쓰레드에게 기부한다. */
 void donate_priority() {
     thread_t *t = thread_current();
     int priority = t->priority;
@@ -753,7 +757,8 @@ void donate_priority() {
     }
 }
 
-/** #Priority Donation 현재 쓰레드의 waiters 리스트를 확인하여 해지할 lock을 보유하고 있는 엔트리를 삭제한다. */
+/** #Project 1: Priority Donation 현재 쓰레드의 waiters 리스트를 확인하여 해지할 lock을 보유하고 있는
+ *  엔트리를 삭제한다. */
 void remove_with_lock(struct lock *lock) {
     thread_t *t = thread_current();
     struct list_elem *curr = list_begin(&t->donations);
@@ -769,7 +774,8 @@ void remove_with_lock(struct lock *lock) {
     }
 }
 
-/** #Priority Donation 쓰레드의 우선순위가 변경되었을 때, donation을 고려하여 우선순위를 다시 결정하는 함수 */
+/** #Project 1: Priority Donation 쓰레드의 우선순위가 변경되었을 때, donation을 고려하여 우선순위를
+ *  다시 결정하는 함수 */
 void refresh_priority(void) {
     /* 현재 쓰레드의 우선순위를 기부 받기 전의 우선순위로 변경.
     현재 쓰레드의 waiters 리스트에서 가장 높은 우선순위를 현재 쓰레드의 우선순위와 비교 후 우선순위 결정 */
@@ -788,7 +794,7 @@ void refresh_priority(void) {
         t->priority = max_thread->priority;
 }
 
-/** #Advanced Scheduler MLFQS Priority 계산하는 함수*/
+/** #Project 1: Advanced Scheduler MLFQS Priority 계산하는 함수*/
 void mlfqs_priority(struct thread *t) {
     if (t == idle_thread)
         return;
@@ -796,7 +802,7 @@ void mlfqs_priority(struct thread *t) {
     t->priority = fp_to_int(add_mixed(div_mixed(t->recent_cpu, -4), PRI_MAX - t->niceness * 2));
 }
 
-/** #Advanced Scheduler MLFQS Recent Cpu 계산하는 함수 */
+/** #Project 1: Advanced Scheduler MLFQS Recent Cpu 계산하는 함수 */
 void mlfqs_recent_cpu(struct thread *t) {
     if (t == idle_thread)
         return;
@@ -804,7 +810,7 @@ void mlfqs_recent_cpu(struct thread *t) {
     t->recent_cpu = add_mixed(mult_fp(div_fp(mult_mixed(load_avg, 2), add_mixed(mult_mixed(load_avg, 2), 1)), t->recent_cpu), t->niceness);
 }
 
-/** #Advanced Scheduler MLFQS Load Average 계산하는 함수 */
+/** #Project 1: Advanced Scheduler MLFQS Load Average 계산하는 함수 */
 void mlfqs_load_avg(void) {
     int ready_threads;
 
@@ -816,7 +822,7 @@ void mlfqs_load_avg(void) {
     load_avg = add_fp(mult_fp(div_fp(int_to_fp(59), int_to_fp(60)), load_avg), mult_mixed(div_fp(int_to_fp(1), int_to_fp(60)), ready_threads));
 }
 
-/** #Advanced Scheduler MLFQS Recent CPU에 1을 더하는 함수 */
+/** #Project 1: Advanced Scheduler MLFQS Recent CPU에 1을 더하는 함수 */
 void mlfqs_increment(void) {
     if (thread_current() == idle_thread)
         return;
@@ -824,7 +830,7 @@ void mlfqs_increment(void) {
     thread_current()->recent_cpu = add_mixed(thread_current()->recent_cpu, 1);
 }
 
-/** #Advanced Scheduler MLFQS 모든 Recent CPU 재계산 */
+/** #Project 1: Advanced Scheduler MLFQS 모든 Recent CPU 재계산 */
 void mlfqs_recalc_recent_cpu(void) {
     struct list_elem *e = list_begin(&all_list);
     thread_t *t = NULL;
@@ -837,7 +843,7 @@ void mlfqs_recalc_recent_cpu(void) {
     }
 }
 
-/** #Advanced Scheduler MLFQS 모든 Priority 재계산 */
+/** #Project 1: Advanced Scheduler MLFQS 모든 Priority 재계산 */
 void mlfqs_recalc_priority(void) {
     struct list_elem *e = list_begin(&all_list);
     thread_t *t = NULL;

@@ -11,7 +11,7 @@
 #include "vm/vm.h"
 #endif
 
-#define USERPROG // Project 2: 충돌 방지
+// #define USERPROG // Project 2: 충돌 방지
 
 /* States in a thread's life cycle. */
 enum thread_status {
