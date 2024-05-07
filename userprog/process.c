@@ -183,8 +183,11 @@ static void __do_fork(void *aux) {
         goto error;
 
     current->fd_idx = parent->fd_idx;  // fdt 및 idx 복제
-    for (int fd = 3; fd < parent->fd_idx; fd++)
+    for (int fd = 3; fd < parent->fd_idx; fd++) {
+        if (parent->fdt[fd] == NULL)
+            continue;
         current->fdt[fd] = file_duplicate(parent->fdt[fd]);
+    }
 
     sema_up(&current->fork_sema);  // fork 프로세스가 정상적으로 완료됐으므로 부모를 다시 실행 가능상태로 전환
 
@@ -233,7 +236,7 @@ int process_exec(void *f_name) {
     argument_stack(argv, argc, &if_);
 
     palloc_free_page(file_name);
-    
+
     /** #Project 2: Command Line Parsing - 디버깅용 툴 */
     // hex_dump(if_.rsp, if_.rsp, USER_STACK - if_.rsp, true);
 
