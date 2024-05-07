@@ -127,7 +127,6 @@ void syscall_handler(struct intr_frame *f UNUSED) {
         case SYS_CLOSE:
             close(f->R.rdi);
             break;
-
         default:
             exit(-1);
     }
@@ -165,12 +164,12 @@ int exec(const char *cmd_line) {
     char *cmd_copy = palloc_get_page(PAL_ZERO);
 
     if (cmd_copy == NULL)
-        exit(-1);
+        return -1;
 
     memcpy(cmd_copy, cmd_line, size);
 
     if (process_exec(cmd_copy) == -1)
-        exit(-1);
+        return -1;
 
     return 0;  // process_exec 성공시 리턴 값 없음 (do_iret)
 }
