@@ -226,13 +226,14 @@ int process_exec(void *f_name) {
     /* And then load the binary */
     success = load(file_name, &if_);
 
-    argument_stack(argv, argc, &if_);
-
     /* If load failed, quit. */
-    palloc_free_page(file_name);
     if (!success)
         return -1;
 
+    argument_stack(argv, argc, &if_);
+
+    palloc_free_page(file_name);
+    
     /** #Project 2: Command Line Parsing - 디버깅용 툴 */
     // hex_dump(if_.rsp, if_.rsp, USER_STACK - if_.rsp, true);
 
@@ -475,8 +476,6 @@ static bool load(const char *file_name, struct intr_frame *if_) {
 done:
     /* We arrive here whether the load is successful or not. */
     // file_close(file);
-    /** #Project 2: Denying Writes to Executables - allow write  */
-    file_allow_write(file);
 
     return success;
 }
