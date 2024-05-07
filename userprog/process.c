@@ -116,7 +116,7 @@ static bool duplicate_pte(uint64_t *pte, void *va, void *aux) {
 
     /* 1. TODO: If the parent_page is kernel page, then return immediately. */
     if (is_kernel_vaddr(va))
-        return false;
+        return true;
 
     /* 2. Resolve VA from the parent's page map level 4. */
     parent_page = pml4_get_page(parent->pml4, va);
@@ -155,7 +155,7 @@ static void __do_fork(void *aux) {
     struct thread *current = thread_current();
     bool succ = true;
     /* TODO: somehow pass the parent_if. (i.e. process_fork()'s if_) */
-    struct intr_frame *parent_if = &current->parent_if;
+    struct intr_frame *parent_if = &parent->parent_if;
 
     /* 1. Read the cpu context to local stack. */
     memcpy(&if_, parent_if, sizeof(struct intr_frame));
