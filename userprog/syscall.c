@@ -235,12 +235,24 @@ int read(int fd, void *buffer, unsigned length) {
 int write(int fd, const void *buffer, unsigned length) {
     check_address(buffer);
 
+    thread_t *curr = thread_current();
     off_t bytes = -1;
 
     if (fd <= 0)  // stdin에 쓰려고 할 경우 & fd 음수일 경우
         return -1;
 
-    if (fd < 3) {  // 1(stdout) * 2(stderr) -> console로 출력
+    if (fd == 1) {                    // 1(stdout) -> console로 출력
+        if (curr->stdout_count <= 0)  // stdout이 닫혀있을 경우
+            return -1;
+
+        putbuf(buffer, length);
+        return length;
+    }
+
+    if (fd == 2) {                    // 2(stderr) -> console로 출력
+        if (curr->stderr_count <= 0)  // stderr이 닫혀있을 경우
+            return -1;
+
         putbuf(buffer, length);
         return length;
     }
