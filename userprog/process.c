@@ -86,7 +86,8 @@ static void initd(void *f_name) {
 tid_t process_fork(const char *name, struct intr_frame *if_ UNUSED) {
     thread_t *curr = thread_current();
 
-    memcpy(&curr->parent_if, if_, sizeof(struct intr_frame));  // 1. 부모를 찾기 위해서 2. do_fork에 전달해주기 위해서
+    struct intr_frame *f = (pg_round_up(rrsp()) - sizeof(struct intr_frame));  // 현재 쓰레드의 if_는 페이지 마지막에 붙어있다.
+    memcpy(&curr->parent_if, f, sizeof(struct intr_frame));                    // 1. 부모를 찾기 위해서 2. do_fork에 전달해주기 위해서
 
     /* 현재 스레드를 새 스레드로 복제합니다.*/
     tid_t tid = thread_create(name, PRI_DEFAULT, __do_fork, curr);
@@ -96,7 +97,7 @@ tid_t process_fork(const char *name, struct intr_frame *if_ UNUSED) {
 
     thread_t *child = get_child_process(tid);
 
-    sema_down(&child->fork_sema);  // 자식 프로세스가 fork_sema를 sema_up 해줄 때까지 대기
+    sema_down(&child->fork_sema);  // 생성만 해놓고 자식 프로세스가 __do_fork에서 fork_sema를 sema_up 해줄 때까지 대기
 
     if (child->exit_status == TID_ERROR)
         return TID_ERROR;
@@ -189,7 +190,7 @@ static void __do_fork(void *aux) {
         current->fdt[fd] = file_duplicate(parent->fdt[fd]);
     }
 
-    sema_up(&current->fork_sema);  // fork 프로세스가 정상적으로 완료됐으므로 부모를 다시 실행 가능상태로 전환
+    sema_up(&current->fork_sema);  // fork 프로세스가 정상적으로 완료됐으므로 현재 fork용 sema unblock
 
     process_init();
 
@@ -198,7 +199,7 @@ static void __do_fork(void *aux) {
         do_iret(&if_);  // 정상 종료 시 자식 Process를 수행하러 감
 
 error:
-    sema_up(&parent->fork_sema);  // 복제에 실패했으므로 부모 process 강제 기상
+    sema_up(&current->fork_sema);  // 복제에 실패했으므로 현재 fork용 sema unblock
     exit(TID_ERROR);
 }
 
@@ -262,7 +263,7 @@ int process_wait(tid_t child_tid UNUSED) {
     int exit_status = child->exit_status;
     list_remove(&child->child_elem);
 
-    sema_up(&child->exit_sema);
+    sema_up(&child->exit_sema); // 자식 프로세스가 죽을 수 있도록 signal
 
     return exit_status;
 }
@@ -284,8 +285,9 @@ void process_exit(void) {
 
     process_cleanup();
 
-    sema_up(&curr->wait_sema);    // 자식 프로세스가 종료될 때까지 대기
-    sema_down(&curr->exit_sema);  // 자식 프로세스의 종료상태를 받을 때까지 대기
+    sema_up(&curr->wait_sema);    // 자식 프로세스가 종료될 때까지 대기하는 부모에게 signal
+
+    // sema_down(&curr->exit_sema);  // 부모 프로세스가 종료될 떄까지 대기
 }
 
 /* Free the current process's resources. */
