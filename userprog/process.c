@@ -154,6 +154,7 @@ static void __do_fork(void *aux) {
     struct thread *parent = (struct thread *)aux;
     struct thread *current = thread_current();
     bool succ = true;
+
     /* TODO: somehow pass the parent_if. (i.e. process_fork()'s if_) */
     struct intr_frame *parent_if = &parent->parent_if;
 
@@ -182,11 +183,37 @@ static void __do_fork(void *aux) {
     if (parent->fd_idx >= FDCOUNT_LIMIT)
         goto error;
 
+    /** #Project 2: Extend File Descriptor - fd 복제 시 공유 구조체 생성 */
+    struct dict_elem dup_file_dict[DICTLEN];
+    int dup_idx = 0;
+    /** -------------------------------------------------------------- */
+
     current->fd_idx = parent->fd_idx;  // fdt 및 idx 복제
-    for (int fd = 3; fd < parent->fd_idx; fd++) {
-        if (parent->fdt[fd] == NULL)
+    struct file *file;
+    for (int fd = 3; fd < FDCOUNT_LIMIT; fd++) {
+        file = parent->fdt[fd];
+        if (file == NULL)
             continue;
-        current->fdt[fd] = file_duplicate(parent->fdt[fd]);
+
+        bool is_exist = false;
+
+        for (int i = 0; i <= dup_idx; i++) {
+            if (dup_file_dict[i].key == file) {
+                current->fdt[fd] = file_duplicate(file);
+                is_exist = true;
+                break;
+            }
+        }
+
+        if (is_exist)
+            continue;
+
+        current->fdt[fd] = file_duplicate(file);
+
+        if (dup_idx < DICTLEN) {
+            dup_file_dict[dup_idx].key = file;
+            dup_file_dict[dup_idx++].value = current->fdt[fd];
+        }
     }
 
     sema_up(&current->fork_sema);  // fork 프로세스가 정상적으로 완료됐으므로 현재 fork용 sema unblock
@@ -773,11 +800,11 @@ process_insert_file(int fd, struct file *f) {
     if (fd >= FDCOUNT_LIMIT)
         return -1;
 
-    if(f == 1)
+    if (f == 1)
         curr->stdin_count++;
-    else if(f == 2)
+    else if (f == 2)
         curr->stdout_count++;
-    else if(f == 3)
+    else if (f == 3)
         curr->stderr_count++;
     else
         f->dup_count++;

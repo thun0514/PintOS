@@ -20,4 +20,12 @@ struct file *process_get_file(int fd);
 int process_close_file(int fd);
 process_insert_file(int fd, struct file *f);
 
+/** #Project 2: Extend File Descriptor - 공유 자원 검증용 구조체 */
+#define DICTLEN 100
+
+struct dict_elem{
+	uintptr_t key;
+	uintptr_t value;
+};
+/** ---------------------------------------------------------  */
 #endif /* userprog/process.h */
