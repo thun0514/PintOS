@@ -273,19 +273,38 @@ int tell(int fd) {
 
 void close(int fd) {
     struct file *file = process_get_file(fd);
+    thread_t *curr = thread_current();
 
-    if (fd < 3 || file == NULL)
+    if (file == NULL)
         return;
 
     process_close_file(fd);
 
-    file_close(file);
+    if (fd == 0 || file == 1) {
+        curr->stdin_count--;
+        return;
+    }
+
+    if (fd == 1 || file == 2) {
+        curr->stdout_count--;
+        return;
+    }
+
+    if (fd == 2 || file == 3) {
+        curr->stderr_count--;
+        return;
+    }
+
+    if (file->dup_count == 0)
+        file_close(file);
+    else
+        file->dup_count--;
 }
 
 /** #Project 2: Extend File Descriptor (Extra) */
 int dup2(int oldfd, int newfd) {
     struct file *oldfile = process_get_file(oldfd);
-    
+
     if (oldfile == NULL)
         return -1;
 
