@@ -198,8 +198,10 @@ int read(int fd, void *buffer, unsigned length) {
     thread_t *curr = thread_current();
     check_address(buffer);
 
-    if (fd == 0) {                   // 0(stdin) -> keyboard로 직접 입력
-        if (curr->stdin_count == 0)  // stdin이 닫혀있을 경우
+    struct file *file = process_get_file(fd);
+
+    if (fd == 0 || file == 1) {     // 0(stdin) -> keyboard로 직접 입력
+        if (curr->stdin_count == 0) /** #Project 2: Extend File Descriptor - stdin이 닫혀있을 경우 */
             return -1;
 
         int i = 0;  // 쓰레기 값 return 방지
@@ -219,7 +221,6 @@ int read(int fd, void *buffer, unsigned length) {
     if (fd < 3)  // stdout, stderr를 읽으려고 할 경우 & fd가 음수일 경우
         return -1;
 
-    struct file *file = process_get_file(fd);
     off_t bytes = -1;
 
     if (file == NULL)  // 파일이 비어있을 경우
@@ -241,26 +242,26 @@ int write(int fd, const void *buffer, unsigned length) {
     if (fd <= 0)  // stdin에 쓰려고 할 경우 & fd 음수일 경우
         return -1;
 
-    if (fd == 1) {                    // 1(stdout) -> console로 출력
-        if (curr->stdout_count <= 0)  // stdout이 닫혀있을 경우
-            return -1;
-
-        putbuf(buffer, length);
-        return length;
-    }
-
-    if (fd == 2) {                    // 2(stderr) -> console로 출력
-        if (curr->stderr_count <= 0)  // stderr이 닫혀있을 경우
-            return -1;
-
-        putbuf(buffer, length);
-        return length;
-    }
-
     struct file *file = process_get_file(fd);
 
     if (file == NULL)
         return -1;
+
+    if (fd == 1 || file == 2) {      // 1(stdout) -> console로 출력
+        if (curr->stdout_count <= 0) /** #Project 2: Extend File Descriptor - stdout이 닫혀있을 경우 */
+            return -1;
+
+        putbuf(buffer, length);
+        return length;
+    }
+
+    if (fd == 2 || file == 3) {      // 2(stderr) -> console로 출력
+        if (curr->stderr_count <= 0) /** #Project 2: Extend File Descriptor - stderr이 닫혀있을 경우 */
+            return -1;
+
+        putbuf(buffer, length);
+        return length;
+    }
 
     lock_acquire(&filesys_lock);
     bytes = file_write(file, buffer, length);
@@ -325,6 +326,9 @@ void close(int fd) {
 
 /** #Project 2: Extend File Descriptor (Extra) */
 int dup2(int oldfd, int newfd) {
+    if (oldfd < 0 || newfd < 0)
+        return -1;
+
     struct file *oldfile = process_get_file(oldfd);
 
     if (oldfile == NULL)
