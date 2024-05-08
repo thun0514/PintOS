@@ -19,7 +19,6 @@
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 #include "userprog/gdt.h"
-#include "userprog/process.h"
 #include "userprog/tss.h"
 
 #ifdef VM
@@ -263,7 +262,7 @@ int process_wait(tid_t child_tid UNUSED) {
     int exit_status = child->exit_status;
     list_remove(&child->child_elem);
 
-    sema_up(&child->exit_sema); // 자식 프로세스가 죽을 수 있도록 signal
+    sema_up(&child->exit_sema);  // 자식 프로세스가 죽을 수 있도록 signal
 
     return exit_status;
 }
@@ -285,7 +284,7 @@ void process_exit(void) {
 
     process_cleanup();
 
-    sema_up(&curr->wait_sema);    // 자식 프로세스가 종료될 때까지 대기하는 부모에게 signal
+    sema_up(&curr->wait_sema);  // 자식 프로세스가 종료될 때까지 대기하는 부모에게 signal
 
     // sema_down(&curr->exit_sema);  // 부모 프로세스가 종료될 떄까지 대기
 }
@@ -731,7 +730,7 @@ thread_t *get_child_process(int pid) {
 }
 
 /** #Project 2: System Call - 현재 스레드 fdt에 파일 추가 */
-static int process_add_file(struct file *f) {
+int process_add_file(struct file *f) {
     thread_t *curr = thread_current();
     struct file **fdt = curr->fdt;
 
@@ -744,7 +743,7 @@ static int process_add_file(struct file *f) {
 }
 
 /** #Project 2: System Call - 현재 스레드의 fd번째 파일 정보 얻기 */
-static struct file *process_get_file(int fd) {
+struct file *process_get_file(int fd) {
     thread_t *curr = thread_current();
 
     if (fd >= FDCOUNT_LIMIT)
@@ -754,7 +753,7 @@ static struct file *process_get_file(int fd) {
 }
 
 /** #Project 2: System Call - 현재 스레드의 fdt에서 파일 삭제 */
-static int process_close_file(int fd) {
+int process_close_file(int fd) {
     thread_t *curr = thread_current();
 
     if (fd >= FDCOUNT_LIMIT)
