@@ -210,9 +210,9 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
     t->exit_status = 0;  // exit_status 초기화
 
     t->fd_idx = 3;
-    t->fdt[0] = 1;  // stdin 예약된 자리 (dummy)
-    t->fdt[1] = 2;  // stdout 예약된 자리 (dummy)
-    t->fdt[2] = 3;  // stderr 예약된 자리 (dummy)
+    t->fdt[0] = STDIN;  // stdin 예약된 자리 (dummy)
+    t->fdt[1] = STDOUT;  // stdout 예약된 자리 (dummy)
+    t->fdt[2] = STDERR;  // stderr 예약된 자리 (dummy)
     /** ---------------------------------------- */
     /** #Project 2: Extend File Descriptor (Extra) 구조체 초기화 */
     t->stdin_count = 1;
