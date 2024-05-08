@@ -35,7 +35,7 @@ void check_address(void *addr);
 
 void halt(void);
 void exit(int status);
-pid_t fork(const char *thread_name, struct intr_frame *f);
+pid_t fork(const char *thread_name);
 int exec(const char *cmd_line);
 int wait(pid_t);
 bool create(const char *file, unsigned initial_size);
@@ -92,7 +92,7 @@ void syscall_handler(struct intr_frame *f UNUSED) {
             exit(f->R.rdi);
             break;
         case SYS_FORK:
-            f->R.rax = fork(f->R.rdi, f);
+            f->R.rax = fork(f->R.rdi);
             break;
         case SYS_EXEC:
             f->R.rax = exec(f->R.rdi);
@@ -151,10 +151,10 @@ void exit(int status) {
     thread_exit();
 }
 
-pid_t fork(const char *thread_name, struct intr_frame *f) {
+pid_t fork(const char *thread_name) {
     check_address(thread_name);
 
-    return process_fork(thread_name, f);
+    return process_fork(thread_name, NULL);
 }
 
 int exec(const char *cmd_line) {
@@ -307,7 +307,7 @@ static int process_add_file(struct file *f) {
     thread_t *curr = thread_current();
     struct file **fdt = curr->fdt;
 
-    if (curr->fd_idx > FDCOUNT_LIMIT)
+    if (curr->fd_idx >= FDCOUNT_LIMIT)
         return -1;
 
     fdt[curr->fd_idx++] = f;
@@ -319,7 +319,7 @@ static int process_add_file(struct file *f) {
 static struct file *process_get_file(int fd) {
     thread_t *curr = thread_current();
 
-    if (fd > FDCOUNT_LIMIT)
+    if (fd >= FDCOUNT_LIMIT)
         return NULL;
 
     return curr->fdt[fd];
@@ -329,7 +329,7 @@ static struct file *process_get_file(int fd) {
 static int process_close_file(int fd) {
     thread_t *curr = thread_current();
 
-    if (fd > FDCOUNT_LIMIT)
+    if (fd >= FDCOUNT_LIMIT)
         return -1;
 
     curr->fdt[fd] = NULL;
