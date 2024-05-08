@@ -210,10 +210,15 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
     t->exit_status = 0;  // exit_status 초기화
 
     t->fd_idx = 3;
-    t->fdt[0] = 0;  // stdin 예약된 자리 (dummy)
-    t->fdt[1] = 1;  // stdout 예약된 자리 (dummy)
-    t->fdt[2] = 2;  // stderr 예약된 자리 (dummy)
+    t->fdt[0] = 1;  // stdin 예약된 자리 (dummy)
+    t->fdt[1] = 2;  // stdout 예약된 자리 (dummy)
+    t->fdt[2] = 3;  // stderr 예약된 자리 (dummy)
     /** ---------------------------------------- */
+    /** #Project 2: Extend File Descriptor (Extra) 구조체 초기화 */
+    t->stdin_count = 1;
+    t->stdout_count = 1;
+    t->stderr_count = 1;
+    /** ------------------------------------------------------- */ 
 
     /** #Project 2: System Call - 현재 스레드의 자식 리스트에 추가 */
     list_push_back(&thread_current()->child_list, &t->child_elem);
