@@ -195,9 +195,13 @@ int filesize(int fd) {
 }
 
 int read(int fd, void *buffer, unsigned length) {
+    thread_t *curr = thread_current();
     check_address(buffer);
 
-    if (fd == 0) {  // 0(stdin) -> keyboard로 직접 입력
+    if (fd == 0) {                   // 0(stdin) -> keyboard로 직접 입력
+        if (curr->stdin_count == 0)  // stdin이 닫혀있을 경우
+            return -1;
+
         int i = 0;  // 쓰레기 값 return 방지
         char c;
         unsigned char *buf = buffer;
@@ -281,17 +285,23 @@ void close(int fd) {
     process_close_file(fd);
 
     if (fd == 0 || file == 1) {
-        curr->stdin_count--;
+        if (curr->stdin_count != 0)
+            curr->stdin_count--;
+
         return;
     }
 
     if (fd == 1 || file == 2) {
-        curr->stdout_count--;
+        if (curr->stdout_count != 0)
+            curr->stdout_count--;
+
         return;
     }
 
     if (fd == 2 || file == 3) {
-        curr->stderr_count--;
+        if (curr->stderr_count != 0)
+            curr->stderr_count--;
+
         return;
     }
 
