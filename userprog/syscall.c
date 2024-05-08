@@ -285,9 +285,12 @@ void close(int fd) {
 /** #Project 2: Extend File Descriptor (Extra) */
 int dup2(int oldfd, int newfd) {
     struct file *oldfile = process_get_file(oldfd);
-
+    
     if (oldfile == NULL)
         return -1;
+
+    if (oldfd == newfd)
+        return newfd;
 
     struct file *newfile = process_get_file(newfd);
 
