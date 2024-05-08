@@ -11,7 +11,7 @@
 #include "vm/vm.h"
 #endif
 
-// #define USERPROG // Project 2: 충돌 방지
+#define USERPROG  // Project 2: 충돌 방지
 
 /* States in a thread's life cycle. */
 enum thread_status {
@@ -37,8 +37,8 @@ typedef int tid_t;
 #define LOAD_AVG_DEFAULT   0
 
 /** #Project 2: System Call */
-#define FDT_PAGES     3                     // test `multi-oom` 통과용
-#define FDCOUNT_LIMIT FDT_PAGES * (1 << 9)  // 512개 인 이유: 페이지 크기 4kb / 파일 포인터 8byte
+#define FDT_PAGES     3                     // test `multi-oom` 테스트용
+#define FDCOUNT_LIMIT FDT_PAGES * (1 << 9)  // 엔트리가 512개 인 이유: 페이지 크기 4kb / 파일 포인터 8byte
 
 /* A kernel thread or user process.
  *
@@ -136,9 +136,9 @@ typedef struct thread {
     struct list child_list;
     struct list_elem child_elem;
 
-    struct semaphore fork_sema; // fork가 완료될 때 signal
-    struct semaphore exit_sema; // 자식 프로세스 종료 signal
-    struct semaphore wait_sema; // exit_sema를 기다릴 때 사용
+    struct semaphore fork_sema;  // fork가 완료될 때 signal
+    struct semaphore exit_sema;  // 자식 프로세스 종료 signal
+    struct semaphore wait_sema;  // exit_sema를 기다릴 때 사용
     /** ----------------------- */
 #endif
 #ifdef VM
