@@ -125,6 +125,12 @@ typedef struct thread {
     /* Owned by userprog/process.c. */
     uint64_t *pml4; /* Page map level 4 */
 
+    /** #Project 2: Extend File Descriptor */
+    int stdin_count;
+    int stdout_count;
+    int stderr_count;
+    /** ---------------------------------- */
+
     /** #Project 2: System Call */
     int exit_status;
 
