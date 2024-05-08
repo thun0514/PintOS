@@ -183,14 +183,13 @@ static void __do_fork(void *aux) {
     if (parent->fd_idx >= FDCOUNT_LIMIT)
         goto error;
 
-    /** #Project 2: Extend File Descriptor - fd 복제 시 공유 구조체 생성 */
+    /** #Project 2: Extend File Descriptor - fd 복제 */
     struct dict_elem dup_file_dict[DICTLEN];
     int dup_idx = 0;
-    /** -------------------------------------------------------------- */
 
     current->fd_idx = parent->fd_idx;  // fdt 및 idx 복제
     struct file *file;
-    for (int fd = 3; fd < FDCOUNT_LIMIT; fd++) {
+    for (int fd = 0; fd < FDCOUNT_LIMIT; fd++) {
         file = parent->fdt[fd];
         if (file == NULL)
             continue;
@@ -208,12 +207,16 @@ static void __do_fork(void *aux) {
         if (is_exist)
             continue;
 
-        current->fdt[fd] = file_duplicate(file);
+        if (file > STDERR)
+            current->fdt[fd] = file_duplicate(file);
+        else
+            current->fdt[fd] = file;
 
         if (dup_idx < DICTLEN) {
             dup_file_dict[dup_idx].key = file;
             dup_file_dict[dup_idx++].value = current->fdt[fd];
         }
+        /** -------------------------------------------------------------- */
     }
 
     sema_up(&current->fork_sema);  // fork 프로세스가 정상적으로 완료됐으므로 현재 fork용 sema unblock
