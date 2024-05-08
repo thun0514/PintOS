@@ -106,6 +106,7 @@ void syscall_handler(struct intr_frame *f UNUSED) {
             break;
         case SYS_DUP2:
             f->R.rax = dup2(f->R.rdi, f->R.rsi);
+            break;
         default:
             exit(-1);
     }
@@ -283,12 +284,19 @@ void close(int fd) {
 
 /** #Project 2: Extend File Descriptor (Extra) */
 int dup2(int oldfd, int newfd) {
-    struct file *oldfile = filesys_open(oldfd);
+    struct file *oldfile = process_get_file(oldfd);
 
     if (oldfile == NULL)
         return -1;
 
-    struct file *newfile = file_duplicate(oldfile);
+    struct file *newfile = process_get_file(newfd);
+
+    if (oldfile == newfile)
+        return newfd;
+
+    close(newfd);
+
+    newfd = process_insert_file(newfd, oldfile);
 
     return newfd;
 }

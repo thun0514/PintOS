@@ -18,5 +18,6 @@ thread_t *get_child_process(int pid);
 int process_add_file(struct file *f);
 struct file *process_get_file(int fd);
 int process_close_file(int fd);
+process_insert_file(int fd, struct file *f);
 
 #endif /* userprog/process.h */

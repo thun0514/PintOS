@@ -737,6 +737,9 @@ int process_add_file(struct file *f) {
     if (curr->fd_idx >= FDCOUNT_LIMIT)
         return -1;
 
+    while (fdt[curr->fd_idx] != NULL)
+        curr->fd_idx++;
+
     fdt[curr->fd_idx++] = f;
 
     return curr->fd_idx - 1;
@@ -761,4 +764,19 @@ int process_close_file(int fd) {
 
     curr->fdt[fd] = NULL;
     return 0;
+}
+
+process_insert_file(int fd, struct file *f) {
+    thread_t *curr = thread_current();
+    struct file **fdt = curr->fdt;
+
+    if (fd >= FDCOUNT_LIMIT)
+        return -1;
+
+    if (fdt[fd] != NULL)
+        return -1;
+
+    fdt[fd] = f;
+
+    return fd;
 }
