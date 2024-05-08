@@ -729,3 +729,37 @@ thread_t *get_child_process(int pid) {
 
     return NULL;
 }
+
+/** #Project 2: System Call - 현재 스레드 fdt에 파일 추가 */
+static int process_add_file(struct file *f) {
+    thread_t *curr = thread_current();
+    struct file **fdt = curr->fdt;
+
+    if (curr->fd_idx >= FDCOUNT_LIMIT)
+        return -1;
+
+    fdt[curr->fd_idx++] = f;
+
+    return curr->fd_idx - 1;
+}
+
+/** #Project 2: System Call - 현재 스레드의 fd번째 파일 정보 얻기 */
+static struct file *process_get_file(int fd) {
+    thread_t *curr = thread_current();
+
+    if (fd >= FDCOUNT_LIMIT)
+        return NULL;
+
+    return curr->fdt[fd];
+}
+
+/** #Project 2: System Call - 현재 스레드의 fdt에서 파일 삭제 */
+static int process_close_file(int fd) {
+    thread_t *curr = thread_current();
+
+    if (fd >= FDCOUNT_LIMIT)
+        return -1;
+
+    curr->fdt[fd] = NULL;
+    return 0;
+}
