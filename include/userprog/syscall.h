@@ -13,8 +13,6 @@ typedef int pid_t;
 #define READDIR_MAX_LEN 14
 
 /** #Project 2: System Call */
-typedef int pid_t;         // 충돌 방지
-
 void check_address(void *addr);
 
 void halt(void);
@@ -31,7 +29,10 @@ int write(int fd, const void *buffer, unsigned length);
 void seek(int fd, unsigned position);
 int tell(int fd);
 void close(int fd);
-int dup2(int oldfd, int newfd);
 /** ------------------------ */
+
+
+/** #Project 2: Extend File Descriptor (Extra) */
+int dup2(int oldfd, int newfd);
 
 #endif /* userprog/syscall.h */

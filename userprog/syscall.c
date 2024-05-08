@@ -278,3 +278,8 @@ void close(int fd) {
 
     file_close(file);
 }
+
+/** #Project 2: Extend File Descriptor (Extra) */
+int dup2(int oldfd, int newfd){
+
+}
