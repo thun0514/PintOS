@@ -773,9 +773,6 @@ process_insert_file(int fd, struct file *f) {
     if (fd >= FDCOUNT_LIMIT)
         return -1;
 
-    if (fdt[fd] != NULL)
-        return -1;
-
     fdt[fd] = f;
 
     return fd;
