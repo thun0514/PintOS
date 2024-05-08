@@ -52,10 +52,6 @@ void syscall_init(void) {
     lock_init(&filesys_lock);
 }
 
-#define STDIN 1
-#define STDOUT 2
-#define STDERR 3
-
 /* The main system call interface */
 /** #Project 2: System Call - 시스템 콜 핸들러 */
 void syscall_handler(struct intr_frame *f UNUSED) {
@@ -202,9 +198,6 @@ int read(int fd, void *buffer, unsigned length) {
     thread_t *curr = thread_current();
     check_address(buffer);
 
-    if (fd < 0)
-        return -1;
-
     struct file *file = process_get_file(fd);
 
     if (file == 1) {                // 0(stdin) -> keyboard로 직접 입력
@@ -225,7 +218,7 @@ int read(int fd, void *buffer, unsigned length) {
         return i;
     }
 
-    if (file == NULL || file == 2 || file == 3)  // 빈 파일, stdout, stderr를 읽으려고 할 경우
+    if (file == NULL || file == STDOUT || file == STDERR)  // 빈 파일, stdout, stderr를 읽으려고 할 경우
         return -1;
 
     // 그 외의 경우
@@ -244,15 +237,12 @@ int write(int fd, const void *buffer, unsigned length) {
     thread_t *curr = thread_current();
     off_t bytes = -1;
 
-    if (fd < 0)  // fd 음수일 경우
-        return -1;
-
     struct file *file = process_get_file(fd);
 
-    if (file == 0 || file == NULL)  // stdin에 쓰려고 할 경우
+    if (file == STDIN || file == NULL)  // stdin에 쓰려고 할 경우
         return -1;
 
-    if (file == 2) {                 // 1(stdout) -> console로 출력
+    if (file == STDOUT) {                 // 1(stdout) -> console로 출력
         if (curr->stdout_count <= 0) /** #Project 2: Extend File Descriptor - stdout이 닫혀있을 경우 */
             return -1;
 
@@ -260,7 +250,7 @@ int write(int fd, const void *buffer, unsigned length) {
         return length;
     }
 
-    if (file == 3) {                 // 2(stderr) -> console로 출력
+    if (file == STDERR) {                 // 2(stderr) -> console로 출력
         if (curr->stderr_count <= 0) /** #Project 2: Extend File Descriptor - stderr이 닫혀있을 경우 */
             return -1;
 
@@ -281,7 +271,7 @@ void seek(int fd, unsigned position) {
 
     struct file *file = process_get_file(fd);
 
-    if (file == NULL || (file > 0 && file < 4))
+    if (file == NULL || (file >= STDIN && file <= STDERR))
         return;
 
     file_seek(file, position);
@@ -290,16 +280,13 @@ void seek(int fd, unsigned position) {
 int tell(int fd) {
     struct file *file = process_get_file(fd);
 
-    if (fd < 3 || file == NULL)
+    if (file == NULL || (file >= STDIN && file <= STDERR))
         return -1;
 
     return file_tell(file);
 }
 
 void close(int fd) {
-    if (fd < 0)
-        return;
-
     thread_t *curr = thread_current();
     struct file *file = process_get_file(fd);
 
@@ -308,21 +295,21 @@ void close(int fd) {
 
     process_close_file(fd);
 
-    if (file == 1) {
+    if (file == STDIN) {
         if (curr->stdin_count != 0)
             curr->stdin_count--;
 
         return;
     }
 
-    if (file == 2) {
+    if (file == STDOUT) {
         if (curr->stdout_count != 0)
             curr->stdout_count--;
 
         return;
     }
 
-    if (file == 3) {
+    if (file == STDERR) {
         if (curr->stderr_count != 0)
             curr->stderr_count--;
 

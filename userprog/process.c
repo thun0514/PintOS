@@ -786,7 +786,7 @@ struct file *process_get_file(int fd) {
 int process_close_file(int fd) {
     thread_t *curr = thread_current();
 
-    if (fd >= FDCOUNT_LIMIT)
+    if (fd < 0 || fd >= FDCOUNT_LIMIT)
         return -1;
 
     curr->fdt[fd] = NULL;
@@ -797,14 +797,14 @@ process_insert_file(int fd, struct file *f) {
     thread_t *curr = thread_current();
     struct file **fdt = curr->fdt;
 
-    if (fd >= FDCOUNT_LIMIT)
+    if (fd < 0 || fd >= FDCOUNT_LIMIT)
         return -1;
 
-    if (f == 1)
+    if (f == STDIN)
         curr->stdin_count++;
-    else if (f == 2)
+    else if (f == STDOUT)
         curr->stdout_count++;
-    else if (f == 3)
+    else if (f == STDERR)
         curr->stderr_count++;
     else
         f->dup_count++;
