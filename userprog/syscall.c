@@ -200,11 +200,8 @@ int read(int fd, void *buffer, unsigned length) {
 
     struct file *file = process_get_file(fd);
 
-    if (file == 1) {                // 0(stdin) -> keyboard로 직접 입력
-        if (curr->stdin_count == 0) /** #Project 2: Extend File Descriptor - stdin이 닫혀있을 경우 */
-            return -1;
-
-        int i = 0;  // 쓰레기 값 return 방지
+    if (file == 1) {  // 0(stdin) -> keyboard로 직접 입력
+        int i = 0;    // 쓰레기 값 return 방지
         char c;
         unsigned char *buf = buffer;
 
@@ -242,17 +239,13 @@ int write(int fd, const void *buffer, unsigned length) {
     if (file == STDIN || file == NULL)  // stdin에 쓰려고 할 경우
         return -1;
 
-    if (file == STDOUT) {                 // 1(stdout) -> console로 출력
-        if (curr->stdout_count <= 0) /** #Project 2: Extend File Descriptor - stdout이 닫혀있을 경우 */
-            return -1;
+    if (file == STDOUT) {  // 1(stdout) -> console로 출력
 
         putbuf(buffer, length);
         return length;
     }
 
-    if (file == STDERR) {                 // 2(stderr) -> console로 출력
-        if (curr->stderr_count <= 0) /** #Project 2: Extend File Descriptor - stderr이 닫혀있을 경우 */
-            return -1;
+    if (file == STDERR) {  // 2(stderr) -> console로 출력
 
         putbuf(buffer, length);
         return length;
@@ -296,23 +289,17 @@ void close(int fd) {
     process_close_file(fd);
 
     if (file == STDIN) {
-        if (curr->stdin_count != 0)
-            curr->stdin_count--;
-
+        file = 0;
         return;
     }
 
     if (file == STDOUT) {
-        if (curr->stdout_count != 0)
-            curr->stdout_count--;
-
+        file = 0;
         return;
     }
 
     if (file == STDERR) {
-        if (curr->stderr_count != 0)
-            curr->stderr_count--;
-
+        file = 0;
         return;
     }
 
@@ -324,18 +311,14 @@ void close(int fd) {
 
 /** #Project 2: Extend File Descriptor (Extra) */
 int dup2(int oldfd, int newfd) {
-    if (oldfd < 0 || newfd < 0)
-        return -1;
-
     struct file *oldfile = process_get_file(oldfd);
+    struct file *newfile = process_get_file(newfd);
 
     if (oldfile == NULL)
         return -1;
 
     if (oldfd == newfd)
         return newfd;
-
-    struct file *newfile = process_get_file(newfd);
 
     if (oldfile == newfile)
         return newfd;
