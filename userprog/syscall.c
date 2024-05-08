@@ -25,25 +25,6 @@ void syscall_handler(struct intr_frame *);
 
 /** #Project 2: System Call */
 struct lock filesys_lock;  // 파일 읽기/쓰기 용 lock
-typedef int pid_t;         // 충돌 방지
-
-void check_address(void *addr);
-
-void halt(void);
-void exit(int status);
-pid_t fork(const char *thread_name);
-int exec(const char *cmd_line);
-int wait(pid_t);
-bool create(const char *file, unsigned initial_size);
-bool remove(const char *file);
-int open(const char *file);
-int filesize(int fd);
-int read(int fd, void *buffer, unsigned length);
-int write(int fd, const void *buffer, unsigned length);
-void seek(int fd, unsigned position);
-int tell(int fd);
-void close(int fd);
-/** ------------------------ */
 
 /* System call.
  *
