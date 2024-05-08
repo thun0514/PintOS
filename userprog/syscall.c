@@ -52,6 +52,10 @@ void syscall_init(void) {
     lock_init(&filesys_lock);
 }
 
+#define STDIN 1
+#define STDOUT 2
+#define STDERR 3
+
 /* The main system call interface */
 /** #Project 2: System Call - 시스템 콜 핸들러 */
 void syscall_handler(struct intr_frame *f UNUSED) {
@@ -198,9 +202,12 @@ int read(int fd, void *buffer, unsigned length) {
     thread_t *curr = thread_current();
     check_address(buffer);
 
+    if (fd < 0)
+        return -1;
+
     struct file *file = process_get_file(fd);
 
-    if (fd == 0 || file == 1) {     // 0(stdin) -> keyboard로 직접 입력
+    if (file == 1) {                // 0(stdin) -> keyboard로 직접 입력
         if (curr->stdin_count == 0) /** #Project 2: Extend File Descriptor - stdin이 닫혀있을 경우 */
             return -1;
 
@@ -217,14 +224,12 @@ int read(int fd, void *buffer, unsigned length) {
 
         return i;
     }
+
+    if (file == NULL || file == 2 || file == 3)  // 빈 파일, stdout, stderr를 읽으려고 할 경우
+        return -1;
+
     // 그 외의 경우
-    if (fd < 3)  // stdout, stderr를 읽으려고 할 경우 & fd가 음수일 경우
-        return -1;
-
     off_t bytes = -1;
-
-    if (file == NULL)  // 파일이 비어있을 경우
-        return -1;
 
     lock_acquire(&filesys_lock);
     bytes = file_read(file, buffer, length);
@@ -239,15 +244,15 @@ int write(int fd, const void *buffer, unsigned length) {
     thread_t *curr = thread_current();
     off_t bytes = -1;
 
-    if (fd <= 0)  // stdin에 쓰려고 할 경우 & fd 음수일 경우
+    if (fd < 0)  // fd 음수일 경우
         return -1;
 
     struct file *file = process_get_file(fd);
 
-    if (file == NULL)
+    if (file == 0 || file == NULL)  // stdin에 쓰려고 할 경우
         return -1;
 
-    if (fd == 1 || file == 2) {      // 1(stdout) -> console로 출력
+    if (file == 2) {                 // 1(stdout) -> console로 출력
         if (curr->stdout_count <= 0) /** #Project 2: Extend File Descriptor - stdout이 닫혀있을 경우 */
             return -1;
 
@@ -255,7 +260,7 @@ int write(int fd, const void *buffer, unsigned length) {
         return length;
     }
 
-    if (fd == 2 || file == 3) {      // 2(stderr) -> console로 출력
+    if (file == 3) {                 // 2(stderr) -> console로 출력
         if (curr->stderr_count <= 0) /** #Project 2: Extend File Descriptor - stderr이 닫혀있을 경우 */
             return -1;
 
@@ -271,9 +276,12 @@ int write(int fd, const void *buffer, unsigned length) {
 }
 
 void seek(int fd, unsigned position) {
+    if (fd < 0)
+        return;
+
     struct file *file = process_get_file(fd);
 
-    if (fd < 3 || file == NULL)
+    if (file == NULL || (file > 0 && file < 4))
         return;
 
     file_seek(file, position);
@@ -289,29 +297,32 @@ int tell(int fd) {
 }
 
 void close(int fd) {
-    struct file *file = process_get_file(fd);
+    if (fd < 0)
+        return;
+
     thread_t *curr = thread_current();
+    struct file *file = process_get_file(fd);
 
     if (file == NULL)
         return;
 
     process_close_file(fd);
 
-    if (fd == 0 || file == 1) {
+    if (file == 1) {
         if (curr->stdin_count != 0)
             curr->stdin_count--;
 
         return;
     }
 
-    if (fd == 1 || file == 2) {
+    if (file == 2) {
         if (curr->stdout_count != 0)
             curr->stdout_count--;
 
         return;
     }
 
-    if (fd == 2 || file == 3) {
+    if (file == 3) {
         if (curr->stderr_count != 0)
             curr->stderr_count--;
 
