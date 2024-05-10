@@ -61,7 +61,7 @@ PintOS는 2004년 스탠포드에서 만들어진 교육용 운영체제예요. 
     ✅ Priority Scheduling  
     ✅ Advanced Scheduler (Extra)  
     🚀 Result : `All 27 tests passed.`
-<br>
+
 
 2. PROJECT 2 - USER PROGRAMS
 
