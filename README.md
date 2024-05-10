@@ -6,7 +6,9 @@
 
 OS프로젝트는 PintOS의 코드를 직접 수정해가며 진행하는 프로젝트입니다.
 PintOS는 2004년 스탠포드에서 만들어진 교육용 운영체제예요. 우리 프로젝트는 이를 기반으로 KAIST 권영진 교수님 주도 하에 만들어진 KAIST PintOS로 진행됩니다.
+
 *****************************
+
 #### 본격적인 탐험 - W07-11 정글끝까지
 
 ```
@@ -16,9 +18,12 @@ PintOS는 2004년 스탠포드에서 만들어진 교육용 운영체제예요. 
 * KAIST PintOS Assignment : https://casys-kaist.github.io/pintos-kaist/
 * 내용은 어렵지만, 매우 상세하게 접근 방법을 기술하고 있습니다.
 
-작업환경 및 설정
 
+#### 작업환경 및 설정
+
+```
 💡 AWS EC2 Ubuntu 22.04 (x86_64)에서 진행합니다.
+```
 
 1) EC2를 다음과 같이 세팅합니다. (한 줄씩 입력)
 ```
@@ -48,20 +53,24 @@ PintOS는 2004년 스탠포드에서 만들어진 교육용 운영체제예요. 
   # 뭔가 한참 compile하고 test 프로그램이 돈 후에 다음 message가 나오면 정상
   20 of 27 tests failed.
 ```
+
+***
 1. PROJECT 1 - THREADS
-    ✅ Alarm Clock
-    ✅ Priority Scheduling
-    ✅ Advanced Scheduler (Extra)
+
+    ✅ Alarm Clock  
+    ✅ Priority Scheduling  
+    ✅ Advanced Scheduler (Extra)  
     🚀 Result : `All 27 tests passed.`
 <br>
 
 2. PROJECT 2 - USER PROGRAMS
-    ✅ Argument Passing
-    ✅ User Memory Access
-    ✅ System Calls
-    ✅ Process Termination Message
-    ✅ Deny Write on Executables
-    ✅ Extend File Descriptor (Extra)
+
+    ✅ Argument Passing  
+    ✅ User Memory Access  
+    ✅ System Calls  
+    ✅ Process Termination Message  
+    ✅ Deny Write on Executables  
+    ✅ Extend File Descriptor (Extra)  
     🚀 Result : `All 97 tests passed.`
 
 
