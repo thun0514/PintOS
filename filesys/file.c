@@ -17,6 +17,7 @@ struct file *file_open(struct inode *inode) {
 
         /** #Project 2: Extend File Descriptor - dup_count 초기화 */
         file->dup_count = 0;
+        
         return file;
     } else {
         inode_close(inode);
