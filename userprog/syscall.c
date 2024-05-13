@@ -172,6 +172,7 @@ bool remove(const char *file) {
 
 int open(const char *file) {
     check_address(file);
+
     struct file *newfile = filesys_open(file);
 
     if (newfile == NULL)
@@ -195,13 +196,16 @@ int filesize(int fd) {
 }
 
 int read(int fd, void *buffer, unsigned length) {
-    thread_t *curr = thread_current();
     check_address(buffer);
 
+    thread_t *curr = thread_current();
     struct file *file = process_get_file(fd);
 
-    if (file == 1) {  // 0(stdin) -> keyboard로 직접 입력
-        int i = 0;    // 쓰레기 값 return 방지
+    if (file == NULL || file == STDOUT || file == STDERR)  // 빈 파일, stdout, stderr를 읽으려고 할 경우
+        return -1;
+        
+    if (file == STDIN) {  // stdin -> console로 직접 입력
+        int i = 0;        // 쓰레기 값 return 방지
         char c;
         unsigned char *buf = buffer;
 
@@ -214,9 +218,6 @@ int read(int fd, void *buffer, unsigned length) {
 
         return i;
     }
-
-    if (file == NULL || file == STDOUT || file == STDERR)  // 빈 파일, stdout, stderr를 읽으려고 할 경우
-        return -1;
 
     // 그 외의 경우
     off_t bytes = -1;
@@ -239,14 +240,7 @@ int write(int fd, const void *buffer, unsigned length) {
     if (file == STDIN || file == NULL)  // stdin에 쓰려고 할 경우
         return -1;
 
-    if (file == STDOUT) {  // 1(stdout) -> console로 출력
-
-        putbuf(buffer, length);
-        return length;
-    }
-
-    if (file == STDERR) {  // 2(stderr) -> console로 출력
-
+    if (file == STDOUT || file == STDERR) {  // 1(stdout) & 2(stderr) -> console로 출력
         putbuf(buffer, length);
         return length;
     }
@@ -259,9 +253,6 @@ int write(int fd, const void *buffer, unsigned length) {
 }
 
 void seek(int fd, unsigned position) {
-    if (fd < 0)
-        return;
-
     struct file *file = process_get_file(fd);
 
     if (file == NULL || (file >= STDIN && file <= STDERR))
