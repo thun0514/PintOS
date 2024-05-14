@@ -24,7 +24,7 @@ enum thread_status {
 /* Thread identifier type.
    You can redefine this to whatever type you like. */
 typedef int tid_t;
-#define TID_ERROR ((tid_t)-1) /* Error value for tid_t. */
+#define TID_ERROR ((tid_t) - 1) /* Error value for tid_t. */
 
 /* Thread priorities. */
 #define PRI_MIN     0  /* Lowest priority. */
@@ -37,8 +37,9 @@ typedef int tid_t;
 #define LOAD_AVG_DEFAULT   0
 
 /** #Project 2: System Call */
-#define FDT_PAGES     3                     // test `multi-oom` 테스트용
-#define FDCOUNT_LIMIT FDT_PAGES * (1 << 9)  // 엔트리가 512개 인 이유: 페이지 크기 4kb / 파일 포인터 8byte
+#define FDT_PAGES 3  // test `multi-oom` 테스트용
+#define FDCOUNT_LIMIT \
+    FDT_PAGES * (1 << 9)  // 엔트리가 512개 인 이유: 페이지 크기 4kb / 파일 포인터 8byte
 
 /* A kernel thread or user process.
  *
@@ -98,57 +99,46 @@ typedef int tid_t;
  * ready state is on the run queue, whereas only a thread in the
  * blocked state is on a semaphore wait list. */
 typedef struct thread {
-    /* Owned by thread.c. */
-    tid_t tid;                 /* Thread identifier. */
-    enum thread_status status; /* Thread state. */
-    char name[16];             /* Name (for debugging purposes). */
-    int priority;              /* Priority. */
-
-    /* Shared between thread.c and synch.c. */
-    struct list_elem elem; /* List element. */
-
-    /** #Project 1: Alarm Clock */
-    int64_t wakeup_tick; /* 활성화 틱 */
-
-    /** #Project 1: Priority Donation */
-    int original_priority;          /* 기존 Priority */
-    struct lock *wait_lock;         /* 대기중인 lock */
-    struct list donations;          /* Donation List. */
-    struct list_elem donation_elem; /* Donation Element. */
-
-    /** #Project 1: Advanced Scheduler */
-    int niceness;              /* Niceness. */
-    int recent_cpu;            /* 최근 CPU 점유 시간 */
-    struct list_elem all_elem; /* 살아있는 모든 Thread 연결 */
-
 #ifdef USERPROG
-    /* Owned by userprog/process.c. */
-    uint64_t *pml4; /* Page map level 4 */
-
-    /** #Project 2: System Call */
-    int exit_status;
-
-    int fd_idx;              // 파일 디스크립터 인덱스
-    struct file **fdt;       // 파일 디스크립터 테이블
-    struct file *runn_file;  // 실행중인 파일
-
-    struct intr_frame parent_if;  // 부모 프로세스 if
-    struct list child_list;
-    struct list_elem child_elem;
-
-    struct semaphore fork_sema;  // fork가 완료될 때 signal
-    struct semaphore exit_sema;  // 자식 프로세스 종료 signal
-    struct semaphore wait_sema;  // exit_sema를 기다릴 때 사용
-    /** ----------------------- */
+    uint64_t *pml4; /* 64-bit 포인터 */
 #endif
+    struct lock *wait_lock; /* 포인터 */
 #ifdef VM
-    /* Table for whole virtual memory owned by thread. */
     struct supplemental_page_table spt;
 #endif
-
-    /* Owned by thread.c. */
+    int64_t wakeup_tick; /* int64_t */
+    int recent_cpu;      /* int */
+    /* int 타입 */
+    tid_t tid;             /* Thread identifier, 가정: int 형태 */
+    int priority;          /* Priority */
+    int original_priority; /* 기존 Priority */
+    int niceness;          /* Niceness */
+    int fd_idx;            /* 파일 디스크립터 인덱스 */
+    /* enum 및 다른 int 타입 */
+    enum thread_status status; /* Thread state */
+    /* 구조체 포인터 (주로 리스트) */
+    struct list donations; /* Donation List */
+    struct list child_list;
+    /* 구조체 list_elem */
+    struct list_elem elem;          /* List element for ready list or another list */
+    struct list_elem donation_elem; /* Donation Element */
+    struct list_elem all_elem;      /* 살아있는 모든 Thread 연결 */
+    struct list_elem child_elem;
+#ifdef USERPROG
+    struct file **fdt;           /* 파일 디스크립터 테이블 포인터 */
+    struct file *runn_file;      /* 실행중인 파일 포인터 */
+    struct intr_frame parent_if; /* 부모 프로세스의 인터럽트 프레임 */
+    struct semaphore fork_sema;  /* fork가 완료될 때 signal */
+    struct semaphore exit_sema;  /* 자식 프로세스 종료 signal */
+    struct semaphore wait_sema;  /* exit_sema를 기다릴 때 사용 */
+#endif
+    /* 기본적인 데이터 타입 */
+    char name[16]; /* Name (for debugging purposes) */
+    int exit_status;
+    /* 오버플로우 감지를 위한 마지막 멤버 */
+    unsigned magic; /* Detects stack overflow */
+    /* 컨텍스트 스위치 정보 */
     struct intr_frame tf; /* Information for switching */
-    unsigned magic;       /* Detects stack overflow. */
 } thread_t;
 
 /* If false (default), use round-robin scheduler.
