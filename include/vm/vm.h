@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include "threads/palloc.h"
 #include "include/lib/kernel/hash.h"
+#include "include/threads/synch.h"
 enum vm_type {
     /* page not initialized */
     VM_UNINIT = 0,
@@ -60,11 +61,20 @@ struct page {
     };
 };
 
+/** PROJ 3 : Memory Management **/
+struct frame_table {
+    struct list frames;
+    struct list_elem next_victim;
+    struct lock ft_lock;
+};
+
 /* The representation of "frame" */
 struct frame {
     void *kva;
     struct page *page;
+    struct list_elem f_elem;
 };
+/**-------------------------------*/
 
 /* The function table for page operations.
  * This is one way of implementing "interface" in C.
