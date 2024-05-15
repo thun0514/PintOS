@@ -1,12 +1,15 @@
 /* vm.c: Generic interface for virtual memory objects. */
 
-#include "vm/vm.h"
-
+#include "include/vm/vm.h"
 #include "threads/malloc.h"
 #include "vm/inspect.h"
 #include "include/threads/vaddr.h"
+
 /* Initializes the virtual memory subsystem by invoking each subsystem's
  * intialize codes. */
+
+struct frame_table frame_table;
+
 void vm_init(void) {
     vm_anon_init();
     vm_file_init();
@@ -16,6 +19,7 @@ void vm_init(void) {
     register_inspect_intr();
     /* DO NOT MODIFY UPPER LINES. */
     /* TODO: Your code goes here. */
+    list_init(&frame_table.frames);
 }
 
 /* Get the type of the page. This function is useful if you want to know the
@@ -108,7 +112,6 @@ static struct frame *vm_evict_frame(void) {
 static struct frame *vm_get_frame(void) {
     struct frame *frame = NULL;
     /* TODO: Fill this function. */
-
     ASSERT(frame != NULL);
     ASSERT(frame->page == NULL);
     return frame;
