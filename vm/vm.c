@@ -4,7 +4,7 @@
 
 #include "threads/malloc.h"
 #include "vm/inspect.h"
-
+#include "include/threads/vaddr.h"
 /* Initializes the virtual memory subsystem by invoking each subsystem's
  * intialize codes. */
 void vm_init(void) {
@@ -61,7 +61,9 @@ err:
 struct page *spt_find_page(struct supplemental_page_table *spt UNUSED, void *va UNUSED) {
     struct page *page = NULL;
     /* TODO: Fill this function. */
-    return page;
+    uint64_t page_va = pg_round_down(va);
+
+    return page_lookup(page_va);
 }
 
 /* Insert PAGE into spt with validation. */
@@ -171,3 +173,13 @@ void supplemental_page_table_kill(struct supplemental_page_table *spt UNUSED) {
     /* TODO: Destroy all the supplemental_page_table hold by thread and
      * TODO: writeback all the modified contents to the storage. */
 }
+
+/** PROJ 3 : MGMT */
+struct page *page_lookup(const void *address) {
+    struct page p;
+    struct hash_elem *e;
+    p.va = address;
+    e = hash_find(&thread_current()->spt.spt_hash, &p.p_elem);
+    return e != NULL ? hash_entry(e, struct page, p_elem) : NULL;
+}
+/** end code - MGMT */
