@@ -71,6 +71,11 @@ bool spt_insert_page(struct supplemental_page_table *spt UNUSED, struct page *pa
     int succ = false;
     /* TODO: Fill this function. */
 
+    /** PROJ 3 : MGMT */
+    if (!hash_insert(&spt, &page->p_elem))
+        succ = true;
+    /** end code - MGMT*/
+
     return succ;
 }
 
