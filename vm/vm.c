@@ -109,10 +109,22 @@ static struct frame *vm_evict_frame(void) {
  * and return it. This always return valid address. That is, if the user pool
  * memory is full, this function evicts the frame to get the available memory
  * space.*/
-static struct frame *vm_get_frame(void) {   
+static struct frame *vm_get_frame(void) {
     struct frame *frame = NULL;
     /* TODO: Fill this function. */
-    palloc_get_multiple(PAL_USER | PAL_ZERO, 1);  /// XXX:
+
+    /** PROJ 3 : MGMT */
+    frame = calloc(1, sizeof(struct frame));
+    frame->kva = palloc_get_page(PAL_USER);
+
+    if (!frame->kva)
+        PANIC("TODO");  // TODO: PANIC~~~~~~~~~~~~~~~~!
+
+    frame->page == NULL;
+    list_push_back(&frame_table.frames, &frame->f_elem);
+
+    /** end code - MGMT */
+
     ASSERT(frame != NULL);
     ASSERT(frame->page == NULL);
     return frame;
