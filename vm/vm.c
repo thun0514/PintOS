@@ -141,7 +141,7 @@ static struct frame *vm_get_frame(void) {
     /* TODO: Fill this function. */
 
     /** PROJ 3 : Memory MGMT */
-    frame = calloc(1, sizeof(struct frame));
+    frame = (struct frame *) calloc(1, sizeof(struct frame));
     frame->kva = palloc_get_page(PAL_USER);
 
     if (!frame->kva)
