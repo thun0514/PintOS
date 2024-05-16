@@ -76,7 +76,7 @@ bool spt_insert_page(struct supplemental_page_table *spt UNUSED, struct page *pa
     /* TODO: Fill this function. */
 
     /** PROJ 3 : MGMT */
-    if (!hash_insert(&spt, &page->p_elem))
+    if (!hash_insert(&spt->spt_hash, &page->p_elem))
         succ = true;
     /** end code - MGMT*/
 
@@ -109,9 +109,10 @@ static struct frame *vm_evict_frame(void) {
  * and return it. This always return valid address. That is, if the user pool
  * memory is full, this function evicts the frame to get the available memory
  * space.*/
-static struct frame *vm_get_frame(void) {
+static struct frame *vm_get_frame(void) {   
     struct frame *frame = NULL;
     /* TODO: Fill this function. */
+    palloc_get_multiple(PAL_USER | PAL_ZERO, 1);  /// XXX:
     ASSERT(frame != NULL);
     ASSERT(frame->page == NULL);
     return frame;
