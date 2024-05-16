@@ -161,10 +161,17 @@ bool vm_claim_page(void *va UNUSED) {
     struct page *page = NULL;
     /* TODO: Fill this function */
 
+    /** PROJ 3 : MGMT */
+    page = page_lookup(va);
+    /** end code - MGMT */
+
     return vm_do_claim_page(page);
 }
 
 /* Claim the PAGE and set up the mmu. */
+/* 당신은 MMU를 세팅해야 하는데, 이는 가상 주소와 물리 주소를 매핑한 정보를 페이지 테이블에
+ * 추가해야 한다는 것을 의미합니다. 위의 함수는 앞에서 말한 연산이 성공적으로 수행되었을 경우에
+ * true를 반환하고 그렇지 않을 경우에 false를 반환합니다.*/
 static bool vm_do_claim_page(struct page *page) {
     struct frame *frame = vm_get_frame();
 
@@ -174,15 +181,18 @@ static bool vm_do_claim_page(struct page *page) {
 
     /* TODO: Insert page table entry to map page's VA to frame's PA. */
 
+    /** PROJ 3 : MGMT */
+    page->va = ptov(frame->kva);
+    /** end code - MGMT */
     return swap_in(page, frame->kva);
 }
 
-/** PROJ 3 : MGMT */
 /* Initialize new supplemental page table */
 void supplemental_page_table_init(struct supplemental_page_table *spt UNUSED) {
+    /** PROJ 3 : MGMT */
     hash_init(&spt->spt_hash, spt->spt_hash.hash, spt->spt_hash.less, NULL);
+    /** end code - MGMT */
 }
-/** PROJ 3 : MGMT */
 
 /* Copy supplemental page table from src to dst */
 bool supplemental_page_table_copy(struct supplemental_page_table *dst UNUSED,
