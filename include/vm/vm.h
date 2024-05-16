@@ -4,6 +4,7 @@
 #include "threads/palloc.h"
 #include "include/lib/kernel/hash.h"
 #include "include/threads/synch.h"
+
 enum vm_type {
     /* page not initialized */
     VM_UNINIT = 0,
@@ -42,11 +43,9 @@ struct thread;
  * uninit_page, file_page, anon_page, and page cache (project4).
  * DO NOT REMOVE/MODIFY PREDEFINED MEMBER OF THIS STRUCTURE. */
 struct page {
-    struct hash_elem p_elem; /** Hash table element. */
     const struct page_operations *operations;
     void *va;            /* Address in terms of user space */
     struct frame *frame; /* Back reference for frame */
-
     /* Your implementation */
     // TODO: My implementation
     /* Per-type data are binded into the union.
@@ -59,6 +58,8 @@ struct page {
         struct page_cache page_cache;
 #endif
     };
+    struct hash_elem p_elem; /** Hash table element. */
+    bool writable;           /* TODO: vm_alloc_page_with_initializer 에서 init해야함 */
 };
 
 /** PROJ 3 : Memory Management **/
@@ -74,7 +75,7 @@ struct frame {
     struct page *page;
     struct list_elem f_elem;
 };
-/**-------------------------------*/
+/** end code - Memory MGMT */
 
 /* The function table for page operations.
  * This is one way of implementing "interface" in C.
@@ -120,9 +121,9 @@ void vm_dealloc_page(struct page *page);
 bool vm_claim_page(void *va);
 enum vm_type page_get_type(struct page *page);
 
-/** PROJ 3 : MGMT */
+/** PROJ 3 : Memory MGMT */
 
 struct page *page_lookup(const void *address);
-/** end code - MGMT */
+/** end code - Memory MGMT */
 
 #endif /* VM_VM_H */
