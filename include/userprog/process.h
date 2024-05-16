@@ -20,8 +20,16 @@ struct file *process_get_file(int fd);
 int process_close_file(int fd);
 process_insert_file(int fd, struct file *f);
 
-#define STDIN 1
+#define STDIN  1
 #define STDOUT 2
 #define STDERR 3
 
+/** PROJ 3 : Memory MGMT */
+
+struct vm_aux {
+    size_t page_read_bytes;
+    struct file *file;
+};
+
+/** end code - Memory MGMT */
 #endif /* userprog/process.h */
