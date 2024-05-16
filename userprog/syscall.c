@@ -19,7 +19,9 @@
 #include "threads/palloc.h"
 #include "userprog/process.h"
 /** -----------------------  */
-
+/** PROJ 3: Memory MGMT */
+#include "include/vm/vm.h"
+/** -----------------------  */
 void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
 
@@ -113,7 +115,7 @@ void syscall_handler(struct intr_frame *f UNUSED) {
 }
 
 void check_address(void *addr) {
-    if (is_kernel_vaddr(addr) || addr == NULL || pml4_get_page(thread_current()->pml4, addr) == NULL)
+    if (is_kernel_vaddr(addr) || addr == NULL || spt_find_page(&thread_current()->spt, addr) == NULL)
         exit(-1);
 }
 
