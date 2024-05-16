@@ -52,7 +52,7 @@ static struct frame *vm_evict_frame(void);
 bool vm_alloc_page_with_initializer(enum vm_type type, void *upage, bool writable,
                                     vm_initializer *init, void *aux) {
     ASSERT(VM_TYPE(type) != VM_UNINIT)
-    
+
     struct supplemental_page_table *spt = &thread_current()->spt;
     /* Check wheter the upage is already occupied or not. */
     if (spt_find_page(spt, upage) == NULL) {
@@ -78,8 +78,10 @@ bool vm_alloc_page_with_initializer(enum vm_type type, void *upage, bool writabl
                 goto err;
         }
         /* TODO: Insert the page into the spt. */
-        if (!hash_insert(&spt->spt_hash, &new_page->p_elem))
+        if (!hash_insert(&spt->spt_hash, &new_page->p_elem)) {
+            free(new_page);
             goto err;
+        }
         return true;
     }
 err:
