@@ -64,10 +64,11 @@ bool vm_alloc_page_with_initializer(enum vm_type type, void *upage, bool writabl
         /* TODO: 페이지를 생성하고 VM 유형에 따라 이니셜라이저를 가져온 다음 uninit_new를 호출하여
          * TODO: "uninit" 페이지 구조체를 생성합니다. uninit_new를 호출한 후 필드를 수정해야 합니다.
          * TODO: 구조체 페이지에 쓰기 가능한 필드를 추가합니다. */
-        struct page *new_page = calloc(1, sizeof(struct page));
+        struct page *new_page = (struct page *) malloc(sizeof(struct page));
         new_page->va = upage;
         new_page->writable = writable;
-        switch (type) {
+        /*FIXME: 여기 init에 null들어가면 좆댐 ㅠㅠ */
+        switch (VM_TYPE(type)) {
             case 1:
                 uninit_new(new_page, upage, init, type, aux, anon_initializer);
                 break;
@@ -78,7 +79,7 @@ bool vm_alloc_page_with_initializer(enum vm_type type, void *upage, bool writabl
                 goto err;
         }
         /* TODO: Insert the page into the spt. */
-        if (!hash_insert(&spt->spt_hash, &new_page->p_elem)) {
+        if (!spt_insert_page(spt, new_page)) {
             free(new_page);
             goto err;
         }
@@ -166,12 +167,27 @@ static bool vm_handle_wp(struct page *page UNUSED) {
 }
 
 /* Return true on success */
+/*addr, user, write, not_present는 비트말하는거 */
 bool vm_try_handle_fault(struct intr_frame *f UNUSED, void *addr UNUSED, bool user UNUSED,
                          bool write UNUSED, bool not_present UNUSED) {
     struct supplemental_page_table *spt UNUSED = &thread_current()->spt;
     struct page *page = NULL;
     /* TODO: Validate the fault */
     /* TODO: Your code goes here */
+    if ((is_kernel_vaddr(addr) && user) || addr == NULL
+        || spt_find_page(&thread_current()->spt, addr) == NULL)
+        return false;
+
+    if (!write)
+        return false;
+
+    if (not_present) {
+        if (!vm_claim_page(addr))
+            return false;
+        else
+            return true;
+    }
+    page = spt_find_page(spt, addr);
 
     return vm_do_claim_page(page);
 }
