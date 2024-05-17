@@ -20,6 +20,7 @@
 #include "threads/vaddr.h"
 #include "userprog/gdt.h"
 #include "userprog/tss.h"
+#include "include/threads/vaddr.h"
 
 #ifdef VM
 #include "vm/vm.h"
@@ -266,8 +267,6 @@ int process_exec(void *f_name) {
  *  이미 성공적으로 호출된 경우 기다리지 않고 즉시 -1을 반환합니다.
  */
 int process_wait(tid_t child_tid UNUSED) {
-    /* XXX: Hint) process_wait(initd)인 경우 pintos가 종료됩니다. process_wait를 구현하기
-       전에 여기에 무한 루프를 추가하는 것이 좋습니다. */
     thread_t *child = get_child_process(child_tid);
     if (child == NULL)
         return -1;
@@ -673,6 +672,7 @@ static bool lazy_load_segment(struct page *page, void *aux) {
     /* Get a page of memory. */
     struct vm_aux *vm_aux = (struct vm_aux *) aux;
     uint8_t *kpage = page->frame->kva;
+    file_seek(vm_aux->file, vm_aux->ofs);  // FIXME: offset 어케하지
 
     if (kpage == NULL)
         return false;
@@ -683,6 +683,7 @@ static bool lazy_load_segment(struct page *page, void *aux) {
         return false;
     }
     memset(kpage + vm_aux->page_read_bytes, 0, PGSIZE - vm_aux->page_read_bytes);
+    return true;
 }
 
 /* Loads a segment starting at offset OFS in FILE at address
@@ -723,27 +724,28 @@ static bool load_segment(struct file *file, off_t ofs, uint8_t *upage, uint32_t 
     ASSERT((read_bytes + zero_bytes) % PGSIZE == 0);
     ASSERT(pg_ofs(upage) == 0);
     ASSERT(ofs % PGSIZE == 0);
+    /** PROJ 3 struct vm_aux,vm_aux->file while문 안으로 옮기는거 고려하기 이유는 lazy load떄문  */
     struct vm_aux *vm_aux = (struct vm_aux *) malloc(sizeof(struct vm_aux));
     vm_aux->file = file;
-    file_seek(file, ofs);  // FIXME: offset 어케하지
     while (read_bytes > 0 || zero_bytes > 0) {
         /* Do calculate how to fill this page.
          * We will read PAGE_READ_BYTES bytes from FILE
          * and zero the final PAGE_ZERO_BYTES bytes. */
         size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
-        // size_t page_zero_bytes = PGSIZE - page_read_bytes;
+        size_t page_zero_bytes = PGSIZE - page_read_bytes;
         vm_aux->page_read_bytes = page_read_bytes;
+        vm_aux->ofs = ofs + page_read_bytes;
+
         /* TODO: Set up aux to pass information to the lazy_load_segment. */
         if (!vm_alloc_page_with_initializer(VM_ANON, upage, writable, lazy_load_segment, vm_aux)) {
-            free(vm_aux);
             return false;
         }
         /* Advance. */
         read_bytes -= page_read_bytes;
-        // zero_bytes -= page_zero_bytes;
+        zero_bytes -= page_zero_bytes;
         upage += PGSIZE;
     }
-    free(vm_aux);
+    // free(vm_aux);
     return true;
 }
 
@@ -751,12 +753,23 @@ static bool load_segment(struct file *file, off_t ofs, uint8_t *upage, uint32_t 
 static bool setup_stack(struct intr_frame *if_) {
     bool success = false;
     void *stack_bottom = (void *) (((uint8_t *) USER_STACK) - PGSIZE);
-
+    /** PROJ 3 첫스택 지연할당 못함, 스택확인 못함 , stack 마킹 못함
+     * 스택 확인 못하면 첫스택인지 아닌지 몰라요~     */
     /* TODO: Map the stack on stack_bottom and claim the page immediately.
      * TODO: If success, set the rsp accordingly.
      * TODO: You should mark the page is stack. */
     /* TODO: Your code goes here */
+    // struct page page;
 
+    if (!vm_alloc_page(VM_ANON, stack_bottom, 1))
+        return success;
+
+    if (!vm_claim_page(stack_bottom))
+        return success;
+
+    if_->rsp = stack_bottom;
+
+    success = true;
     return success;
 }
 #endif /* VM */
@@ -778,7 +791,6 @@ void argument_stack(char **argv, int argc, struct intr_frame *if_) {
 
     if_->rsp -= 8;
     memset(if_->rsp, 0, sizeof(char *));
-
     for (int i = argc - 1; i >= 0; i--) {
         if_->rsp -= 8;
         memcpy(if_->rsp, &arg_addr[i], sizeof(char *));
