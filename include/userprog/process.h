@@ -28,6 +28,7 @@ process_insert_file(int fd, struct file *f);
 
 struct vm_aux {
     size_t page_read_bytes;
+    off_t ofs;
     struct file *file;
 };
 
