@@ -79,7 +79,8 @@ static void kill(struct intr_frame *f) {
         case SEL_UCSEG:
             /* User's code segment, so it's a user exception, as we
                expected.  Kill the user process.  */
-            printf("%s: dying due to interrupt %#04llx (%s).\n", thread_name(), f->vec_no, intr_name(f->vec_no));
+            printf("%s: dying due to interrupt %#04llx (%s).\n", thread_name(), f->vec_no,
+                   intr_name(f->vec_no));
             intr_dump_frame(f);
             thread_exit();
 
@@ -94,7 +95,8 @@ static void kill(struct intr_frame *f) {
         default:
             /* Some other code segment?  Shouldn't happen.  Panic the
                kernel. */
-            printf("Interrupt %#04llx (%s) in unknown segment %04x\n", f->vec_no, intr_name(f->vec_no), f->cs);
+            printf("Interrupt %#04llx (%s) in unknown segment %04x\n", f->vec_no,
+                   intr_name(f->vec_no), f->cs);
             thread_exit();
     }
 }
@@ -121,7 +123,7 @@ static void page_fault(struct intr_frame *f) {
        data.  It is not necessarily the address of the instruction
        that caused the fault (that's f->rip). */
 
-    fault_addr = (void *)rcr2();
+    fault_addr = (void *) rcr2();
 
     /* Turn interrupts back on (they were only off so that we could
        be assured of reading CR2 before it changed). */
@@ -141,10 +143,12 @@ static void page_fault(struct intr_frame *f) {
     /* Count page faults. */
     page_fault_cnt++;
 
-    exit(-1); /** Test Case 가 Hardware 수준에서 페이지 폴트를 호출하기 때문에 Test Case 통과를 위해서 exception을 수정해야함. */
+    //  exit(-1); /** Test Case 가 Hardware 수준에서 페이지 폴트를 호출하기 때문에 Test Case 통과를
+    //  위해서 exception을 수정해야함. */
 
     /* If the fault is true fault, show info and exit. */
-    printf("Page fault at %p: %s error %s page in %s context.\n", fault_addr, not_present ? "not present" : "rights violation", write ? "writing" : "reading",
+    printf("Page fault at %p: %s error %s page in %s context.\n", fault_addr,
+           not_present ? "not present" : "rights violation", write ? "writing" : "reading",
            user ? "user" : "kernel");
     kill(f);
 }

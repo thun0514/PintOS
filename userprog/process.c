@@ -767,9 +767,10 @@ static bool setup_stack(struct intr_frame *if_) {
     if (!vm_claim_page(stack_bottom))
         return success;
 
-    if_->rsp = stack_bottom;
+    if_->rsp = stack_bottom + PGSIZE;
 
     success = true;
+    printf("%d",success);
     return success;
 }
 #endif /* VM */

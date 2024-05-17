@@ -365,7 +365,7 @@ static void remove_elem(struct hash *h, struct hash_elem *e) {
     list_remove(&e->list_elem);
 }
 
-/** PROJ 3 : MGMT */
+/** PROJ 3 : Memory MGMT */
 
 /* Returns a hash value for page p. */
 unsigned page_hash(const struct hash_elem *p_, void *aux UNUSED) {
@@ -380,4 +380,4 @@ bool page_less(const struct hash_elem *a_, const struct hash_elem *b_, void *aux
 
     return a->va < b->va;
 }
-/** end code - MGMT */
+/** end code - Memory MGMT */
