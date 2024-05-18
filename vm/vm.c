@@ -154,10 +154,10 @@ static struct frame *vm_get_frame(void) {
 
     /** PROJ 3 : Memory MGMT */
     frame = (struct frame *) calloc(1, sizeof(struct frame));
-    frame->kva = palloc_get_page(PAL_USER);
+    frame->kva = palloc_get_page(PAL_USER | PAL_ZERO);
 
     if (!frame->kva)
-        PANIC("TODO");  // TODO: PANIC~~~~~~~~~~~~~~~~!
+        PANIC("\nTODOOOOOOOOOOOOOOOO~~~~\n");  // TODO: PANIC~~~~~~~~~~~~~~~~!
 
     frame->page == NULL;
     list_push_back(&frame_table.frames, &frame->f_elem);
