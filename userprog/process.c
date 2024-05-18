@@ -671,18 +671,21 @@ static bool lazy_load_segment(struct page *page, void *aux) {
 
     /* Get a page of memory. */
     struct vm_aux *vm_aux = (struct vm_aux *) aux;
+    struct file *file = vm_aux->file;
+    off_t offset = vm_aux->ofs;
+    size_t page_read_bytes = vm_aux->page_read_bytes;
+
     uint8_t *kpage = page->frame->kva;
-    file_seek(vm_aux->file, vm_aux->ofs);  // FIXME: offset 어케하지
 
     if (kpage == NULL)
         return false;
 
     /* Load this page. */
-    if (file_read(vm_aux->file, kpage, vm_aux->page_read_bytes) != (int) vm_aux->page_read_bytes) {
+    file_seek(file, offset);
+    if (file_read(file, kpage, page_read_bytes) != (int) page_read_bytes) {
         palloc_free_page(kpage);
         return false;
     }
-    memset(kpage + vm_aux->page_read_bytes, 0, PGSIZE - vm_aux->page_read_bytes);
     return true;
 }
 
@@ -772,7 +775,6 @@ static bool setup_stack(struct intr_frame *if_) {
     if_->rsp = stack_bottom + PGSIZE;
 
     success = true;
-    printf("%d",success);
     return success;
 }
 #endif /* VM */
