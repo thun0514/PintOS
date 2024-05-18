@@ -725,27 +725,29 @@ static bool load_segment(struct file *file, off_t ofs, uint8_t *upage, uint32_t 
     ASSERT(pg_ofs(upage) == 0);
     ASSERT(ofs % PGSIZE == 0);
     /** PROJ 3 struct vm_aux,vm_aux->file while문 안으로 옮기는거 고려하기 이유는 lazy load떄문  */
-    struct vm_aux *vm_aux = (struct vm_aux *) malloc(sizeof(struct vm_aux));
-    vm_aux->file = file;
     while (read_bytes > 0 || zero_bytes > 0) {
         /* Do calculate how to fill this page.
          * We will read PAGE_READ_BYTES bytes from FILE
          * and zero the final PAGE_ZERO_BYTES bytes. */
+
         size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
         size_t page_zero_bytes = PGSIZE - page_read_bytes;
-        vm_aux->page_read_bytes = page_read_bytes;
-        vm_aux->ofs = ofs + page_read_bytes;
+
+        struct vm_aux *vm_aux = (struct vm_aux *) calloc(1, sizeof(struct vm_aux));
+        *vm_aux = (struct vm_aux){.file = file, .page_read_bytes = page_read_bytes, .ofs = ofs};
 
         /* TODO: Set up aux to pass information to the lazy_load_segment. */
-        if (!vm_alloc_page_with_initializer(VM_ANON, upage, writable, lazy_load_segment, vm_aux)) {
+        if (!vm_alloc_page_with_initializer(VM_ANON, upage, writable, lazy_load_segment,
+                                            (void *) vm_aux)) {
             return false;
         }
         /* Advance. */
+        ofs += page_read_bytes;
         read_bytes -= page_read_bytes;
         zero_bytes -= page_zero_bytes;
         upage += PGSIZE;
     }
-    // free(vm_aux);
+
     return true;
 }
 
