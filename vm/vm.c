@@ -267,7 +267,7 @@ void supplemental_page_table_kill(struct supplemental_page_table *spt UNUSED) {
 struct page *page_lookup(const void *address) {
     struct page p;
     struct hash_elem *e;
-    p.va = address;
+    p.va = pg_round_down(address);
     e = hash_find(&thread_current()->spt.spt_hash, &p.p_elem);
     return e != NULL ? hash_entry(e, struct page, p_elem) : NULL;
 }
