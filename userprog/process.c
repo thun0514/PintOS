@@ -758,22 +758,22 @@ static bool load_segment(struct file *file, off_t ofs, uint8_t *upage, uint32_t 
 static bool setup_stack(struct intr_frame *if_) {
     bool success = false;
     void *stack_bottom = (void *) (((uint8_t *) USER_STACK) - PGSIZE);
-    /** PROJ 3 첫스택 지연할당 못함, 스택확인 못함 , stack 마킹 못함
-     * 스택 확인 못하면 첫스택인지 아닌지 몰라요~     */
+    /** PROJ 3 첫스택 지연할당 못함, stack 마킹 못함
+     * 스택 확인 못하면 첫스택인지 아닌지 몰라요~
+     * 스택확인은 thread 구조체에 stack_bottom 멤버 추가해서 할수있음 */
     /* TODO: Map the stack on stack_bottom and claim the page immediately.
      * TODO: If success, set the rsp accordingly.
      * TODO: You should mark the page is stack. */
     /* TODO: Your code goes here */
     // struct page page;
 
-    if (!vm_alloc_page(VM_ANON, stack_bottom, 1))
+    if (!vm_alloc_page(VM_ANON | VM_MARKER_0, stack_bottom, true))
         return success;
 
     if (!vm_claim_page(stack_bottom))
         return success;
 
-    if_->rsp = stack_bottom + PGSIZE;
-
+    if_->rsp = USER_STACK;
     success = true;
     return success;
 }
