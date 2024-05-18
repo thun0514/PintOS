@@ -104,8 +104,6 @@ struct page *spt_find_page(struct supplemental_page_table *spt UNUSED, void *va 
     /* TODO: Fill this function. */
 
     /** PROJ 3 : Memory MGMT */
-    // uint64_t page_va = pg_round_down(va);
-
     return page_lookup(va);
     /** end code - Memory MGMT*/
 }
@@ -252,8 +250,33 @@ void supplemental_page_table_init(struct supplemental_page_table *spt UNUSED) {
 }
 
 /* Copy supplemental page table from src to dst */
-bool supplemental_page_table_copy(struct supplemental_page_table *dst UNUSED,
-                                  struct supplemental_page_table *src UNUSED) {
+bool supplemental_page_table_copy(struct supplemental_page_table *child UNUSED,
+                                  struct supplemental_page_table *parent UNUSED) {
+    /** PROJ 3 : Anonymous Page */
+    struct hash_iterator p_i;
+    struct hash *p_h = &parent->spt_hash;
+    hash_first(&p_i, p_h);  // p_i 초기화
+
+    while (hash_next(&p_i)) {
+        struct page *p_page = hash_entry(hash_cur(&p_i), struct page, p_elem);
+        enum vm_type p_real_type = p_page->operations->type;
+
+        if ((VM_TYPE(p_real_type)) == VM_UNINIT) {
+            vm_alloc_page_with_initializer(p_page->uninit.type, p_page->va, p_page->writable,
+                                           p_page->uninit.init, p_page->uninit.aux);
+        } else {
+            vm_alloc_page(p_real_type, p_page->va, p_page->writable);
+
+            struct page *c_page = spt_find_page(child, p_page->va);
+
+            if (!vm_do_claim_page(c_page))
+                return false;
+
+            memcpy(c_page->frame->kva, p_page->frame->kva, PGSIZE);
+        }
+    }
+    return true;
+    /** end code - Anonymous Page */
 }
 
 /* Free the resource hold by the supplemental page table */
