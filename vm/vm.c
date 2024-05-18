@@ -5,6 +5,7 @@
 #include "vm/inspect.h"
 #include "include/threads/vaddr.h"
 #include "include/threads/mmu.h"
+#include <string.h>
 
 /* Initializes the virtual memory subsystem by invoking each subsystem's
  * intialize codes. */
@@ -103,9 +104,9 @@ struct page *spt_find_page(struct supplemental_page_table *spt UNUSED, void *va 
     /* TODO: Fill this function. */
 
     /** PROJ 3 : Memory MGMT */
-    uint64_t page_va = pg_round_down(va);
+    // uint64_t page_va = pg_round_down(va);
 
-    return page_lookup(page_va);
+    return page_lookup(va);
     /** end code - Memory MGMT*/
 }
 
