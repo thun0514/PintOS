@@ -20,7 +20,11 @@ void vm_init(void) {
     register_inspect_intr();
     /* DO NOT MODIFY UPPER LINES. */
     /* TODO: Your code goes here. */
+
+    /** PROJ 3 : Memory MGMT*/
     list_init(&frame_table.frames);
+    lock_init(&frame_table.ft_lock);
+    /** end code - Memory MGMT*/
 }
 
 /* Get the type of the page. This function is useful if you want to know the
@@ -93,9 +97,12 @@ err:
 struct page *spt_find_page(struct supplemental_page_table *spt UNUSED, void *va UNUSED) {
     struct page *page = NULL;
     /* TODO: Fill this function. */
+
+    /** PROJ 3 : Memory MGMT */
     uint64_t page_va = pg_round_down(va);
 
     return page_lookup(page_va);
+    /** end code - Memory MGMT*/
 }
 
 /* Insert PAGE into spt with validation. */
