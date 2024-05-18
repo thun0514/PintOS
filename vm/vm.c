@@ -216,7 +216,7 @@ bool vm_claim_page(void *va UNUSED) {
     /* TODO: Fill this function */
 
     /** PROJ 3 : Memory MGMT */
-    page = page_lookup(va);
+    page = spt_find_page(&thread_current()->spt, va);
     if (page == NULL)
         return false;
     /** end code - Memory MGMT */
