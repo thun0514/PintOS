@@ -248,7 +248,7 @@ static bool vm_do_claim_page(struct page *page) {
 /* Initialize new supplemental page table */
 void supplemental_page_table_init(struct supplemental_page_table *spt UNUSED) {
     /** PROJ 3 : Memory MGMT */
-    hash_init(&spt->spt_hash, spt->spt_hash.hash, spt->spt_hash.less, NULL);
+    hash_init(&spt->spt_hash, page_hash, page_less, NULL);
     /** end code - Memory MGMT */
 }
 
