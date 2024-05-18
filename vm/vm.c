@@ -186,21 +186,19 @@ bool vm_try_handle_fault(struct intr_frame *f UNUSED, void *addr UNUSED, bool us
     /* TODO: Validate the fault */
     /* TODO: Your code goes here */
     if ((is_kernel_vaddr(addr) && user) || addr == NULL
-        || spt_find_page(&thread_current()->spt, addr) == NULL)
+        || (page = spt_find_page(&thread_current()->spt, addr)) == NULL)
         return false;
 
-    if (!write)
+    if (page->writable == 0 && write == 1)
         return false;
 
     if (not_present) {
-        if (!vm_claim_page(addr))
+        if (!vm_do_claim_page(page))
             return false;
         else
             return true;
     }
-    page = spt_find_page(spt, addr);
-
-    return vm_do_claim_page(page);
+    return false;
 }
 
 /* Free the page.
