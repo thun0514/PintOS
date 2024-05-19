@@ -283,6 +283,7 @@ bool supplemental_page_table_copy(struct supplemental_page_table *child UNUSED,
 void supplemental_page_table_kill(struct supplemental_page_table *spt UNUSED) {
     /* TODO: Destroy all the supplemental_page_table hold by thread and
      * TODO: writeback all the modified contents to the storage. */
+    hash_clear(&spt->spt_hash, page_killer);
 }
 
 /** PROJ 3 : Memory MGMT */
@@ -292,5 +293,10 @@ struct page *page_lookup(const void *address) {
     p.va = pg_round_down(address);
     e = hash_find(&thread_current()->spt.spt_hash, &p.p_elem);
     return e != NULL ? hash_entry(e, struct page, p_elem) : NULL;
+}
+
+void *page_killer(struct hash_elem *hash_elem, void *aux UNUSED) {
+    struct page *page = hash_entry(hash_elem, struct page, p_elem);
+    vm_dealloc_page(page);
 }
 /** end code - Memory MGMT */

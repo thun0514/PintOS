@@ -59,7 +59,7 @@ struct page {
 #endif
     };
     struct hash_elem p_elem; /** Hash table element. */
-    bool writable;           /* TODO: vm_alloc_page_with_initializer 에서 init해야함 */
+    bool writable;
 };
 
 /** PROJ 3 : Memory Management **/
@@ -124,6 +124,7 @@ enum vm_type page_get_type(struct page *page);
 /** PROJ 3 : Memory MGMT */
 
 struct page *page_lookup(const void *address);
+void *page_killer(struct hash_elem *hash_elem, void *aux UNUSED);
 /** end code - Memory MGMT */
 
 #endif /* VM_VM_H */
