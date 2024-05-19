@@ -177,24 +177,31 @@ static bool vm_handle_wp(struct page *page UNUSED) {
 }
 
 /* Return true on success */
-/*addr, user, write, not_present는 비트말하는거 */
+/* addr, user, write, not_present는 비트말하는거 */
 bool vm_try_handle_fault(struct intr_frame *f UNUSED, void *addr UNUSED, bool user UNUSED,
                          bool write UNUSED, bool not_present UNUSED) {
     struct supplemental_page_table *spt UNUSED = &thread_current()->spt;
     struct page *page = NULL;
     /* TODO: Validate the fault */
     /* TODO: Your code goes here */
-    if ((is_kernel_vaddr(addr) && user) || addr == NULL
-        || (page = spt_find_page(&thread_current()->spt, addr)) == NULL)
+    if ((is_kernel_vaddr(addr) && user) || addr == NULL)
         return false;
+
+    if ((page = spt_find_page(&thread_current()->spt, addr)) == NULL) {
+        if (thread_current()->usb > addr && addr >= USER_STACK - USM_SIZE)
+            vm_stack_growth(addr);
+        else
+            return false;
+    }
 
     if (page->writable == 0 && write == 1)
         return false;
 
     if (not_present) {
-        if (!vm_do_claim_page(page))
+        if (!vm_do_claim_page(page)) {
+            palloc_free_page(page); // #Q. 할당 해제 해야함? 동소환
             return false;
-        else
+        } else
             return true;
     }
     return false;
