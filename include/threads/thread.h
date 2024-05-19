@@ -103,6 +103,7 @@ typedef struct thread {
     struct lock *wait_lock; /* 포인터 */
 #ifdef VM
     struct supplemental_page_table spt;
+    uint64_t usb;  // User Stack Bottom 
 #endif
     int64_t wakeup_tick; /* int64_t */
     int recent_cpu;      /* int */
