@@ -169,7 +169,16 @@ static struct frame *vm_get_frame(void) {
 }
 
 /* Growing the stack. */
-static void vm_stack_growth(void *addr UNUSED) {
+static void vm_stack_growth(void *addr) {
+    struct supplemental_page_table *spt = &thread_current()->spt;
+    void *d_addr = addr;
+    struct page *page = spt_find_page(spt, d_addr);
+    while (!page) {
+        page = spt_find_page(spt, d_addr);
+        if (!vm_alloc_page(VM_ANON, d_addr, true) || !vm_claim_page(d_addr))
+            return false;
+        d_addr += PGSIZE;
+    }
 }
 
 /* Handle the fault on write_protected page */
@@ -181,24 +190,28 @@ static bool vm_handle_wp(struct page *page UNUSED) {
 bool vm_try_handle_fault(struct intr_frame *f UNUSED, void *addr UNUSED, bool user UNUSED,
                          bool write UNUSED, bool not_present UNUSED) {
     struct supplemental_page_table *spt UNUSED = &thread_current()->spt;
-    struct page *page = spt_find_page(&thread_current()->spt, addr);
+    struct page *page = spt_find_page(spt, addr);
+
     /* TODO: Validate the fault */
     /* TODO: Your code goes here */
+
     if ((is_kernel_vaddr(addr) && user) || addr == NULL)
         return false;
-
-    if ((page) == NULL) {
-        if (thread_current()->usb > addr && addr >= USER_STACK - USM_SIZE)
-            vm_stack_growth(addr);
-        else
-            return false;
-    }
-
     if (not_present) {
-        if (!vm_do_claim_page(page)) {
-            return false;
-        } else
-            return true;
+        void *rsp = user ? f->rsp : thread_current()->usb;
+        if (!page) {
+            if (addr >= USER_STACK - USM_SIZE && (addr == rsp)) {
+                vm_stack_growth(pg_round_down(addr));
+                return true;
+            }
+
+        } else {
+            if (!write || page->writable)
+                return vm_do_claim_page(page);
+
+            if (write && !page->writable)
+                return false;
+        }
     }
     return false;
 }
