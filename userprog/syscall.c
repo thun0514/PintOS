@@ -110,7 +110,7 @@ void syscall_handler(struct intr_frame *f UNUSED) {
             f->R.rax = dup2(f->R.rdi, f->R.rsi);
             break;
         case SYS_MMAP:
-            mmap(f->R.rdi, f->R.rsi, f->R.rdx, f->R.r10, f->R.r9);
+            f->R.rax = mmap(f->R.rdi, f->R.rsi, f->R.rdx, f->R.r10, f->R.r9);
             break;
         default:
             exit(-1);
