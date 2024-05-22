@@ -1,13 +1,13 @@
 #ifndef USERPROG_SYSCALL_H
 #define USERPROG_SYSCALL_H
-
 #include <stdbool.h>
-
+#include <stddef.h>
+#include <include/filesys/off_t.h>
 void syscall_init(void);
 
 /* Process identifier. */
 typedef int pid_t;
-#define PID_ERROR ((pid_t)-1)
+#define PID_ERROR ((pid_t) - 1)
 
 /* Maximum characters in a filename written by readdir(). */
 #define READDIR_MAX_LEN 14
@@ -31,8 +31,11 @@ int tell(int fd);
 void close(int fd);
 /** ------------------------ */
 
-
 /** #Project 2: Extend File Descriptor (Extra) */
 int dup2(int oldfd, int newfd);
+
+/** PROJ 3 : M-mapped filed*/
+void *mmap(void *addr, size_t length, int writable, int fd, off_t offset);
+/** end code - M-mapped filed */
 
 #endif /* userprog/syscall.h */

@@ -42,8 +42,8 @@ struct lock filesys_lock;  // 파일 읽기/쓰기 용 lock
 #define MSR_SYSCALL_MASK 0xc0000084 /* Mask for the eflags */
 
 void syscall_init(void) {
-    write_msr(MSR_STAR, ((uint64_t)SEL_UCSEG - 0x10) << 48 | ((uint64_t)SEL_KCSEG) << 32);
-    write_msr(MSR_LSTAR, (uint64_t)syscall_entry);
+    write_msr(MSR_STAR, ((uint64_t) SEL_UCSEG - 0x10) << 48 | ((uint64_t) SEL_KCSEG) << 32);
+    write_msr(MSR_LSTAR, (uint64_t) syscall_entry);
 
     /* The interrupt service rountine should not serve any interrupts
      * until the syscall_entry swaps the userland stack to the kernel
@@ -109,13 +109,17 @@ void syscall_handler(struct intr_frame *f UNUSED) {
         case SYS_DUP2:
             f->R.rax = dup2(f->R.rdi, f->R.rsi);
             break;
+        case SYS_MMAP:
+            mmap(f->R.rdi, f->R.rsi, f->R.rdx, f->R.r10, f->R.r9);
+            break;
         default:
             exit(-1);
     }
 }
 
 void check_address(void *addr) {
-    if (is_kernel_vaddr(addr) || addr == NULL || spt_find_page(&thread_current()->spt, addr) == NULL)
+    if (is_kernel_vaddr(addr) || addr == NULL
+        || spt_find_page(&thread_current()->spt, addr) == NULL)
         exit(-1);
 }
 
@@ -203,9 +207,10 @@ int read(int fd, void *buffer, unsigned length) {
     thread_t *curr = thread_current();
     struct file *file = process_get_file(fd);
 
-    if (file == NULL || file == STDOUT || file == STDERR)  // 빈 파일, stdout, stderr를 읽으려고 할 경우
+    if (file == NULL || file == STDOUT
+        || file == STDERR)  // 빈 파일, stdout, stderr를 읽으려고 할 경우
         return -1;
-        
+
     if (file == STDIN) {  // stdin -> console로 직접 입력
         int i = 0;        // 쓰레기 값 return 방지
         char c;
@@ -322,3 +327,21 @@ int dup2(int oldfd, int newfd) {
 
     return newfd;
 }
+
+/** PROJ 3 : M-mapped filed*/
+void *mmap(void *addr, size_t length, int writable, int fd, off_t offset) {
+    struct file *file = process_get_file(fd);
+
+    if (file_length(file) == 0 || addr == NULL)
+        return NULL;
+
+    if (fd < 3 || length == 0 || ((unsigned long) addr % PGSIZE))
+        return NULL;
+
+    if (spt_find_page(&thread_current()->spt, addr))
+        return NULL;
+
+    return do_mmap(addr, length, writable, file, offset);
+}
+
+/** end code - M-mapped filed */
