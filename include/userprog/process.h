@@ -19,7 +19,7 @@ int process_add_file(struct file *f);
 struct file *process_get_file(int fd);
 int process_close_file(int fd);
 process_insert_file(int fd, struct file *f);
-
+bool lazy_load_segment(struct page *page, void *aux);
 #define STDIN  1
 #define STDOUT 2
 #define STDERR 3
