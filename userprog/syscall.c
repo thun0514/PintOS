@@ -110,7 +110,7 @@ void syscall_handler(struct intr_frame *f UNUSED) {
             f->R.rax = dup2(f->R.rdi, f->R.rsi);
             break;
         case SYS_MMAP:
-            f->R.rax = mmap(f->R.rdi, f->R.rsi, f->R.rdx, f->R.r10, f->R.r9);
+            f->R.rax = mmap(f->R.rdi, f->R.rsi, f->R.rdx, f->R.r10, f->R.r8);
             break;
         case SYS_MUNMAP:
             munmap(f->R.rdi);
@@ -213,6 +213,10 @@ int read(int fd, void *buffer, unsigned length) {
     if (file == NULL || file == STDOUT
         || file == STDERR)  // 빈 파일, stdout, stderr를 읽으려고 할 경우
         return -1;
+
+    struct page *page = spt_find_page(&thread_current()->spt, buffer);
+    if (!page->writable)
+        exit(-1);
 
     if (file == STDIN) {  // stdin -> console로 직접 입력
         int i = 0;        // 쓰레기 값 return 방지
@@ -333,15 +337,18 @@ int dup2(int oldfd, int newfd) {
 
 /** PROJ 3 : M-mapped filed*/
 void *mmap(void *addr, size_t length, int writable, int fd, off_t offset) {
-    struct file *file = process_get_file(fd);
-
-    if (filesize(file) == 0 || addr == NULL || is_kernel_vaddr(addr))
+    if (fd < 3 || addr == NULL || is_kernel_vaddr(addr))
         return NULL;
 
-    if (fd < 3 || (int)length <= 0 || ((unsigned long) addr % PGSIZE))
+    if (offset > PGSIZE || (int) length <= 0 || ((unsigned long) addr % PGSIZE))
         return NULL;
 
     if (spt_find_page(&thread_current()->spt, addr))
+        return NULL;
+
+    struct file *file = process_get_file(fd);
+
+    if (filesize(file) == 0)
         return NULL;
 
     return do_mmap(addr, length, writable, file, offset);
