@@ -84,7 +84,7 @@ static tid_t allocate_tid(void);
  * down to the start of a page.  Since `struct thread' is
  * always at the beginning of a page and the stack pointer is
  * somewhere in the middle, this locates the curent thread. */
-#define running_thread() ((struct thread *)(pg_round_down(rrsp())))
+#define running_thread() ((struct thread *) (pg_round_down(rrsp())))
 
 // Global descriptor table for the thread_start.
 // Because the gdt will be setup after the thread_init, we should
@@ -107,7 +107,7 @@ void thread_init(void) {
     /* Reload the temporal gdt for the kernel
      * This gdt does not include the user context.
      * The kernel will rebuild the gdt with user context, in gdt_init (). */
-    struct desc_ptr gdt_ds = {.size = sizeof(gdt) - 1, .address = (uint64_t)gdt};
+    struct desc_ptr gdt_ds = {.size = sizeof(gdt) - 1, .address = (uint64_t) gdt};
     lgdt(&gdt_ds);
 
     /* Init the globla thread context */
@@ -169,7 +169,8 @@ void thread_tick(void) {
 
 /* Prints thread statistics. */
 void thread_print_stats(void) {
-    printf("Thread: %lld idle ticks, %lld kernel ticks, %lld user ticks\n", idle_ticks, kernel_ticks, user_ticks);
+    printf("Thread: %lld idle ticks, %lld kernel ticks, %lld user ticks\n", idle_ticks,
+           kernel_ticks, user_ticks);
 }
 
 /* Creates a new kernel thread named NAME with the given initial
@@ -220,9 +221,9 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
 #endif
     /* Call the kernel_thread if it scheduled.
      * Note) rdi is 1st argument, and rsi is 2nd argument. */
-    t->tf.rip = (uintptr_t)kernel_thread;
-    t->tf.R.rdi = (uint64_t)function;
-    t->tf.R.rsi = (uint64_t)aux;
+    t->tf.rip = (uintptr_t) kernel_thread;
+    t->tf.R.rdi = (uint64_t) function;
+    t->tf.R.rsi = (uint64_t) aux;
     t->tf.ds = SEL_KDSEG;
     t->tf.es = SEL_KDSEG;
     t->tf.ss = SEL_KDSEG;
@@ -383,7 +384,8 @@ int thread_get_nice(void) {
 /** #Project 1: Advanced Scheduler load_avg에 100을 곱해서 반환하는 함수 */
 int thread_get_load_avg(void) {
     enum intr_level old_level = intr_disable();
-    int load_avg_val = fp_to_int_round(mult_mixed(load_avg, 100));  // 출력시 소수 2번째 자리까지 출력하기 위함
+    int load_avg_val =
+        fp_to_int_round(mult_mixed(load_avg, 100));  // 출력시 소수 2번째 자리까지 출력하기 위함
     intr_set_level(old_level);
 
     return load_avg_val;
@@ -394,7 +396,8 @@ int thread_get_recent_cpu(void) {
     thread_t *t = thread_current();
 
     enum intr_level old_level = intr_disable();
-    int recent_cpu = fp_to_int_round(mult_mixed(t->recent_cpu, 100));  // 출력시 소수 2번째 자리까지 출력하기 위함
+    int recent_cpu = fp_to_int_round(
+        mult_mixed(t->recent_cpu, 100));  // 출력시 소수 2번째 자리까지 출력하기 위함
     intr_set_level(old_level);
 
     return recent_cpu;
@@ -455,7 +458,7 @@ static void init_thread(struct thread *t, const char *name, int priority) {
     memset(t, 0, sizeof *t);
     t->status = THREAD_BLOCKED;
     strlcpy(t->name, name, sizeof t->name);
-    t->tf.rsp = (uint64_t)t + PGSIZE - sizeof(void *);
+    t->tf.rsp = (uint64_t) t + PGSIZE - sizeof(void *);
 
     if (thread_mlfqs) {
         /** #Project 1: Advanced Scheduler 자료구조 초기화 */
@@ -526,27 +529,29 @@ void do_iret(struct intr_frame *tf) {
         "movw (%%rsp),%%es\n"   // rsp 위치의 값을 레지스터 es(extra segment)에 저장
 
         "addq $32, %%rsp\n"  // rsp 위치를 rsp+32로 이동. rsp->rip
-        "iretq"              // rip 이하(cs, eflags, rsp, ss) 인터럽트 프레임에서 CPU로 복원. (직접 ACCESS 불가능)
-        :                    // 인터럽트 프레임의 rip 값을 복원함으로서 기존에 수행하던 스레드의 다음 명령 실행 ... ?
-        : "g"((uint64_t)tf)  // g=인자. 0번 인자로 tf를 받음
+        "iretq"  // rip 이하(cs, eflags, rsp, ss) 인터럽트 프레임에서 CPU로 복원. (직접 ACCESS
+                 // 불가능)
+        :  // 인터럽트 프레임의 rip 값을 복원함으로서 기존에 수행하던 스레드의 다음 명령 실행 ... ?
+        : "g"((uint64_t) tf)  // g=인자. 0번 인자로 tf를 받음
         : "memory");
 }
 
-/* 새 스레드의 페이지 테이블을 활성화하여 스레드를 전환하고, 이전 스레드가 죽어 있으면 이를 삭제합니다.
+/* 새 스레드의 페이지 테이블을 활성화하여 스레드를 전환하고, 이전 스레드가 죽어 있으면 이를
+   삭제합니다.
 
-   이 함수를 호출할 때 방금 PREV 스레드에서 전환했으며 새 스레드가 이미 실행 중이고 인터럽트는 여전히
-   비활성화되어 있습니다.
+   이 함수를 호출할 때 방금 PREV 스레드에서 전환했으며 새 스레드가 이미 실행 중이고 인터럽트는
+   여전히 비활성화되어 있습니다.
 
-   스레드 전환이 완료될 때까지 printf()를 호출하는 것은 안전하지 않습니다. 실제로 이는 printf()를 함수
-   끝에 추가해야 함을 의미합니다. */
+   스레드 전환이 완료될 때까지 printf()를 호출하는 것은 안전하지 않습니다. 실제로 이는 printf()를
+   함수 끝에 추가해야 함을 의미합니다. */
 static void thread_launch(struct thread *th) {
-    uint64_t tf_cur = (uint64_t)&running_thread()->tf;
-    uint64_t tf = (uint64_t)&th->tf;
+    uint64_t tf_cur = (uint64_t) &running_thread()->tf;
+    uint64_t tf = (uint64_t) &th->tf;
     ASSERT(intr_get_level() == INTR_OFF);
 
     /* 주요 스위칭 로직.
-     * 먼저 전체 실행 컨텍스트를 intr_frame으로 복원한 후 do_iret를 호출하여 다음 스레드로 전환합니다.
-     * 전환이 완료될 때까지 여기에서 스택을 사용해서는 안 됩니다.*/
+     * 먼저 전체 실행 컨텍스트를 intr_frame으로 복원한 후 do_iret를 호출하여 다음 스레드로
+     * 전환합니다. 전환이 완료될 때까지 여기에서 스택을 사용해서는 안 됩니다.*/
     __asm __volatile(
         /* 레지스터 정보를 Stack에 임시로 저장. */
         "push %%rax\n"  // Stack에 rax위치의 값 저장
@@ -574,33 +579,37 @@ static void thread_launch(struct thread *th) {
         "movq %%rbx, 104(%%rax)\n"  // 레지스터 rbx의 값을 rax+104 위치에 저장
         "pop %%rbx\n"               // Stack에 저장된 rax의 값을 rbx 위치에 복원
         "movq %%rbx, 112(%%rax)\n"  // 레지스터 rbx의 값을 rax+112 위치에 저장
-        "addq $120, %%rax\n"        // 레지스터 rax의 위치를 정수 레지스터 다음으로 이동 rax->es
-        "movw %%es, (%%rax)\n"      // es값을 rax의 위치(es)에 저장
-        "movw %%ds, 8(%%rax)\n"     // ds값을 rax+8의 위치(ds)에 저장
-        "addq $32, %%rax\n"         // 레지스터 rax를 rip 위치로 이동
+        "addq $120, %%rax\n"  // 레지스터 rax의 위치를 정수 레지스터 다음으로 이동 rax->es
+        "movw %%es, (%%rax)\n"   // es값을 rax의 위치(es)에 저장
+        "movw %%ds, 8(%%rax)\n"  // ds값을 rax+8의 위치(ds)에 저장
+        "addq $32, %%rax\n"      // 레지스터 rax를 rip 위치로 이동
 
         "call __next\n"  // "__next"로 레이블된 위치를 스택에 콜
 
         "__next:\n"  // "__next" 레이블: 다음으로 이동할 레이블
 
         "pop %%rbx\n"                          // Stack에 저장한 위치를 rbx에 복원
-        "addq $(out_iret -  __next), %%rbx\n"  // rbx의 위치를 (out_iret - __next를 미리계산)의 값으로 이동한다 -> 다시 이 스레드를 실행 시 out_iret부터 재개
-        "movq %%rbx, 0(%%rax)\n"               // rbx의 위치를 rax+0(rip)에 저장
-        "movw %%cs, 8(%%rax)\n"                // 레지스터 cs의 값을 rax+8(cs)에 저장
+        "addq $(out_iret -  __next), %%rbx\n"  // rbx의 위치를 (out_iret - __next를 미리계산)의
+                                               // 값으로 이동한다 -> 다시 이 스레드를 실행 시
+                                               // out_iret부터 재개
+        "movq %%rbx, 0(%%rax)\n"  // rbx의 위치를 rax+0(rip)에 저장
+        "movw %%cs, 8(%%rax)\n"   // 레지스터 cs의 값을 rax+8(cs)에 저장
 
-        "pushfq\n"                // 현재의 플래그 레지스터 내용을 Stack에 저장 (직접 ACCESS 불가)
+        "pushfq\n"  // 현재의 플래그 레지스터 내용을 Stack에 저장 (직접 ACCESS 불가)
         "popq %%rbx\n"            // Stack에 저장한 내용을 rbx에 복원
         "mov %%rbx, 16(%%rax)\n"  // 레지스터 rbx(eflags)의 값을 rax+16(eflags)에 저장
         "mov %%rsp, 24(%%rax)\n"  // 레지스터 rsp의 값을 rax+24(rsp)에 저장
         "movw %%ss, 32(%%rax)\n"  // 레지스터 ss의 값을 rax+32(rax)에 저장
 
-        "mov %%rcx, %%rdi\n"  // 레지스터 rcx의 값(인자 1번 tf의 주소)을 레지스터 레지스터 rdi로 복사
-        "call do_iret\n"      // rdi를 인자로 받아 do_iret 함수 호출
+        "mov %%rcx, %%rdi\n"  // 레지스터 rcx의 값(인자 1번 tf의 주소)을 레지스터 레지스터 rdi로
+                              // 복사
+        "call do_iret\n"  // rdi를 인자로 받아 do_iret 함수 호출
 
         "out_iret:\n"           // "out_iret" 레이블: 다음으로 이동할 레이블
         :                       // output operands
         : "g"(tf_cur), "g"(tf)  // input operands
-        : "memory");            // list of clobbered registers -> memory의 register들이 asm 실행 전/후 갱신되어야 함
+        : "memory");  // list of clobbered registers -> memory의 register들이 asm 실행 전/후
+                      // 갱신되어야 함
 }
 
 /* 새로운 프로세스를 예약합니다. 진입 시 인터럽트는 꺼져 있어야 합니다.
@@ -715,7 +724,8 @@ int64_t get_next_tick_to_awake(void) {
     return next_tick_to_awake;
 }
 
-/** #Project 1: Priority Scheduling ready_list에서 우선 순위가 가장 높은 쓰레드와 현재 쓰레드의 우선 순위를 비교 */
+/** #Project 1: Priority Scheduling ready_list에서 우선 순위가 가장 높은 쓰레드와 현재 쓰레드의 우선
+ * 순위를 비교 */
 void test_max_priority(void) {
     if (list_empty(&ready_list))
         return;
@@ -723,10 +733,11 @@ void test_max_priority(void) {
     thread_t *th = list_entry(list_front(&ready_list), thread_t, elem);
 
     if (thread_current()->priority < th->priority) {
-        /** Project 2: Panic 방지 */
+#ifdef USERPROG /** Project 2: 외부 인터럽트에 의한 thread yield 방지 */
         if (intr_context())
             intr_yield_on_return();
         else
+#endif
             thread_yield();
     }
 }
@@ -749,7 +760,8 @@ void donate_priority() {
     int priority = t->priority;
 
     for (int depth = 0; depth < 8; depth++) {
-        if (t->wait_lock == NULL)
+        /** Project 3 에서 child가 먼저 삭제되면 holder가 NULL이 되는 경우가 발생 */
+        if (t->wait_lock == NULL || t->wait_lock->holder == NULL)
             break;
 
         t = t->wait_lock->holder;
@@ -757,8 +769,8 @@ void donate_priority() {
     }
 }
 
-/** #Project 1: Priority Donation 현재 쓰레드의 waiters 리스트를 확인하여 해지할 lock을 보유하고 있는
- *  엔트리를 삭제한다. */
+/** #Project 1: Priority Donation 현재 쓰레드의 waiters 리스트를 확인하여 해지할 lock을 보유하고
+ * 있는 엔트리를 삭제한다. */
 void remove_with_lock(struct lock *lock) {
     thread_t *t = thread_current();
     struct list_elem *curr = list_begin(&t->donations);
@@ -778,7 +790,8 @@ void remove_with_lock(struct lock *lock) {
  *  다시 결정하는 함수 */
 void refresh_priority(void) {
     /* 현재 쓰레드의 우선순위를 기부 받기 전의 우선순위로 변경.
-    현재 쓰레드의 waiters 리스트에서 가장 높은 우선순위를 현재 쓰레드의 우선순위와 비교 후 우선순위 결정 */
+    현재 쓰레드의 waiters 리스트에서 가장 높은 우선순위를 현재 쓰레드의 우선순위와 비교 후 우선순위
+    결정 */
     thread_t *t = thread_current();
     t->priority = t->original_priority;
 
@@ -807,7 +820,10 @@ void mlfqs_recent_cpu(struct thread *t) {
     if (t == idle_thread)
         return;
 
-    t->recent_cpu = add_mixed(mult_fp(div_fp(mult_mixed(load_avg, 2), add_mixed(mult_mixed(load_avg, 2), 1)), t->recent_cpu), t->niceness);
+    t->recent_cpu =
+        add_mixed(mult_fp(div_fp(mult_mixed(load_avg, 2), add_mixed(mult_mixed(load_avg, 2), 1)),
+                          t->recent_cpu),
+                  t->niceness);
 }
 
 /** #Project 1: Advanced Scheduler MLFQS Load Average 계산하는 함수 */
@@ -819,7 +835,8 @@ void mlfqs_load_avg(void) {
     if (thread_current() != idle_thread)
         ready_threads++;
 
-    load_avg = add_fp(mult_fp(div_fp(int_to_fp(59), int_to_fp(60)), load_avg), mult_mixed(div_fp(int_to_fp(1), int_to_fp(60)), ready_threads));
+    load_avg = add_fp(mult_fp(div_fp(int_to_fp(59), int_to_fp(60)), load_avg),
+                      mult_mixed(div_fp(int_to_fp(1), int_to_fp(60)), ready_threads));
 }
 
 /** #Project 1: Advanced Scheduler MLFQS Recent CPU에 1을 더하는 함수 */
