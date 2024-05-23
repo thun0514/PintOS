@@ -335,10 +335,10 @@ int dup2(int oldfd, int newfd) {
 void *mmap(void *addr, size_t length, int writable, int fd, off_t offset) {
     struct file *file = process_get_file(fd);
 
-    if (file_length(file) == 0 || addr == NULL)
+    if (filesize(file) == 0 || addr == NULL || is_kernel_vaddr(addr))
         return NULL;
 
-    if (fd < 3 || length == 0 || ((unsigned long) addr % PGSIZE))
+    if (fd < 3 || (int)length <= 0 || ((unsigned long) addr % PGSIZE))
         return NULL;
 
     if (spt_find_page(&thread_current()->spt, addr))
