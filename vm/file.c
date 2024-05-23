@@ -47,7 +47,10 @@ static void file_backed_destroy(struct page *page) {
 /* Do the mmap */
 void *do_mmap(void *addr, size_t length, int writable, struct file *file, off_t offset) {
     uint8_t *d_addr = addr;
-    size_t read_bytes = length < file_length(file) ? length : file_length(file);
+    struct file *re_file = file_reopen(file);
+    if (!re_file)
+        return false;
+    size_t read_bytes = length < file_length(re_file) ? length : file_length(re_file);
     size_t zero_bytes = PGSIZE - read_bytes % PGSIZE;
     while (read_bytes > 0 || zero_bytes > 0) {
         /* Do calculate how to fill this page.
@@ -58,11 +61,13 @@ void *do_mmap(void *addr, size_t length, int writable, struct file *file, off_t 
         size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
         struct vm_aux *vm_aux = (struct vm_aux *) calloc(1, sizeof(struct vm_aux));
-        *vm_aux = (struct vm_aux){.file = file, .page_read_bytes = page_read_bytes, .ofs = offset};
+        *vm_aux =
+            (struct vm_aux){.file = re_file, .page_read_bytes = page_read_bytes, .ofs = offset};
 
         /* TODO: Set up aux to pass information to the lazy_load_segment. */
         if (!vm_alloc_page_with_initializer(VM_FILE, d_addr, writable, lazy_load_segment,
                                             (void *) vm_aux)) {
+            free(vm_aux);
             return NULL;
         }
         /* Advance. */
