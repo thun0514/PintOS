@@ -106,11 +106,12 @@ void do_munmap(void *addr) {
 
         vm_aux = page->uninit.aux;
         struct file *next_file = vm_aux->file;
-        if (!next_file || next_file != orig_file)
+        if (!next_file || next_file != orig_file) 
             break;
 
         destroy(page);
         d_addr += PGSIZE;
     }
+    free(page);
     return addr;
 }
