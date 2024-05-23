@@ -3,6 +3,7 @@
 #include "vm/vm.h"
 #include <include/userprog/process.h>
 #include <include/threads/vaddr.h>
+#include <include/threads/mmu.h>
 
 static bool file_backed_swap_in(struct page *page, void *kva);
 static bool file_backed_swap_out(struct page *page);
@@ -76,4 +77,31 @@ void *do_mmap(void *addr, size_t length, int writable, struct file *file, off_t 
 
 /* Do the munmap */
 void do_munmap(void *addr) {
+    uint8_t *d_addr = addr;
+    struct page *page = spt_find_page(&thread_current()->spt, d_addr);
+    struct vm_aux *vm_aux = page->uninit.aux;
+    struct file *orig_file = vm_aux->file;
+    while (1) {
+        page = spt_find_page(&thread_current()->spt, d_addr);
+        if (!page)
+            break;
+
+        vm_aux = page->uninit.aux;
+        struct file *next_file = vm_aux->file;
+        if (!next_file || next_file != orig_file)
+            break;
+
+        if (pml4_is_dirty(thread_current()->pml4, d_addr)) {
+            file_write_at(next_file, page->va, vm_aux->page_read_bytes, vm_aux->ofs);
+            pml4_set_page(thread_current()->pml4, d_addr, page->frame->kva, page->writable);
+            pml4_set_dirty(thread_current()->pml4, d_addr, 0);
+        }
+
+        pml4_clear_page(thread_current()->pml4, d_addr);
+        page->frame = NULL;
+        // memset(d_addr, 0, PGSIZE); 이거 넣으면 d_addr못찾아서 터짐
+
+        d_addr += PGSIZE;
+    }
+    return addr;
 }
