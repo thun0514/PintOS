@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "userprog/syscall.h"
 
 #include "filesys/directory.h"
 #include "filesys/file.h"
@@ -414,6 +415,7 @@ static bool load(const char *file_name, struct intr_frame *if_) {
     if (t->pml4 == NULL)
         goto done;
     process_activate(thread_current());
+    lock_acquire(&filesys_lock);
 
     /* Open executable file. */
     file = filesys_open(file_name);
@@ -498,6 +500,7 @@ static bool load(const char *file_name, struct intr_frame *if_) {
 done:
     /* We arrive here whether the load is successful or not. */
     // file_close(file);
+    lock_release(&filesys_lock);
 
     return success;
 }
