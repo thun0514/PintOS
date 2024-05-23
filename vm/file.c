@@ -41,7 +41,20 @@ static bool file_backed_swap_out(struct page *page) {
 
 /* Destory the file backed page. PAGE will be freed by the caller. */
 static void file_backed_destroy(struct page *page) {
-    struct file_page *file_page UNUSED = &page->file;
+    struct vm_aux *vm_aux = page->uninit.aux;
+
+    if (pml4_is_dirty(thread_current()->pml4, page->va)) {
+        file_write_at(vm_aux->file, page->va, vm_aux->page_read_bytes, vm_aux->ofs);
+        pml4_set_dirty(thread_current()->pml4, page->va, 0);
+    }
+
+    if (page->frame) {
+        list_remove(&page->frame->f_elem);
+        free(page->frame);
+        page->frame = NULL;
+    }
+
+    pml4_clear_page(thread_current()->pml4, page->va);
 }
 
 /* Do the mmap */
@@ -96,16 +109,7 @@ void do_munmap(void *addr) {
         if (!next_file || next_file != orig_file)
             break;
 
-        if (pml4_is_dirty(thread_current()->pml4, d_addr)) {
-            file_write_at(next_file, page->va, vm_aux->page_read_bytes, vm_aux->ofs);
-            pml4_set_page(thread_current()->pml4, d_addr, page->frame->kva, page->writable);
-            pml4_set_dirty(thread_current()->pml4, d_addr, 0);
-        }
-
-        pml4_clear_page(thread_current()->pml4, d_addr);
-        page->frame = NULL;
-        // memset(d_addr, 0, PGSIZE); 이거 넣으면 d_addr못찾아서 터짐
-
+        destroy(page);
         d_addr += PGSIZE;
     }
     return addr;
