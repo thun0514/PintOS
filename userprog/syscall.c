@@ -170,28 +170,40 @@ int wait(pid_t tid) {
 bool create(const char *file, unsigned initial_size) {
     check_address(file);
 
-    return filesys_create(file, initial_size);
+    lock_acquire(&filesys_lock);
+    bool file_succ = filesys_create(file, initial_size);
+    lock_release(&filesys_lock);
+
+    return file_succ;
 }
 
 bool remove(const char *file) {
     check_address(file);
 
-    return filesys_remove(file);
+    lock_acquire(&filesys_lock);
+    bool file_succ = filesys_remove(file);
+    lock_release(&filesys_lock);
+
+    return file_succ;
 }
 
 int open(const char *file) {
     check_address(file);
 
+    lock_acquire(&filesys_lock);
     struct file *newfile = filesys_open(file);
 
-    if (newfile == NULL)
+    if (newfile == NULL) {
+        lock_release(&filesys_lock);
         return -1;
+    }
 
     int fd = process_add_file(newfile);
 
     if (fd == -1)
         file_close(newfile);
 
+    lock_release(&filesys_lock);
     return fd;
 }
 
@@ -245,6 +257,7 @@ int read(int fd, void *buffer, unsigned length) {
 
 int write(int fd, const void *buffer, unsigned length) {
     check_address(buffer);
+    lock_acquire(&filesys_lock);
 
     thread_t *curr = thread_current();
     off_t bytes = -1;
@@ -252,14 +265,17 @@ int write(int fd, const void *buffer, unsigned length) {
     struct file *file = process_get_file(fd);
 
     if (file == STDIN || file == NULL)  // stdin에 쓰려고 할 경우
+    {
+        lock_release(&filesys_lock);
         return -1;
+    }
 
     if (file == STDOUT || file == STDERR) {  // 1(stdout) & 2(stderr) -> console로 출력
         putbuf(buffer, length);
+        lock_release(&filesys_lock);
         return length;
     }
 
-    lock_acquire(&filesys_lock);
     bytes = file_write(file, buffer, length);
     lock_release(&filesys_lock);
 
