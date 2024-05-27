@@ -657,7 +657,7 @@ static bool install_page(void *upage, void *kpage, bool writable) {
             && pml4_set_page(t->pml4, upage, kpage, writable));
 }
 
-#else  /** PROJ 3 ========================================================= */
+#else  /** #Project 3 ========================================================= */
 
 /* From here, codes will be used after project 3.
  * If you want to implement the function for only project 2, implement it on the
@@ -730,7 +730,7 @@ static bool load_segment(struct file *file, off_t ofs, uint8_t *upage, uint32_t 
     ASSERT((read_bytes + zero_bytes) % PGSIZE == 0);
     ASSERT(pg_ofs(upage) == 0);
     ASSERT(ofs % PGSIZE == 0);
-    /** PROJ 3 struct vm_aux,vm_aux->file while문 안으로 옮기는거 고려하기 이유는 lazy load떄문  */
+    /** Project 3 struct vm_aux,vm_aux->file while문 안으로 옮기는거 고려하기 이유는 lazy load떄문  */
     while (read_bytes > 0 || zero_bytes > 0) {
         /* Do calculate how to fill this page.
          * We will read PAGE_READ_BYTES bytes from FILE
@@ -762,7 +762,7 @@ static bool setup_stack(struct intr_frame *if_) {
     bool success = false;
     void *stack_bottom = (void *) (((uint8_t *) USER_STACK) - PGSIZE);
     thread_current()->usb = stack_bottom;
-    /** PROJ 3 첫스택 지연할당 못함, stack 마킹 못함
+    /** Project 3 첫스택 지연할당 못함, stack 마킹 못함
      * 스택 확인 못하면 첫스택인지 아닌지 몰라요~
      * 스택확인은 thread 구조체에 stack_bottom 멤버 추가해서 할수있음 */
     /* TODO: Map the stack on stack_bottom and claim the page immediately.

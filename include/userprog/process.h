@@ -24,7 +24,7 @@ bool lazy_load_segment(struct page *page, void *aux);
 #define STDOUT 2
 #define STDERR 3
 
-/** PROJ 3 : Memory MGMT */
+/** #Project 3: Memory MGMT */
 
 struct vm_aux {
     size_t page_read_bytes;

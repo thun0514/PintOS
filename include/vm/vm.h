@@ -62,7 +62,7 @@ struct page {
     bool writable;
 };
 
-/** PROJ 3 : Memory Management **/
+/** #Project 3: Memory Management **/
 struct frame_table {
     struct list frames;
     struct list_elem next_victim;
@@ -121,7 +121,7 @@ void vm_dealloc_page(struct page *page);
 bool vm_claim_page(void *va);
 enum vm_type page_get_type(struct page *page);
 
-/** PROJ 3 : Memory MGMT */
+/** #Project 3: Memory MGMT */
 
 struct page *page_lookup(const void *address);
 void *page_killer(struct hash_elem *hash_elem, void *aux UNUSED);

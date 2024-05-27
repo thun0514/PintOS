@@ -22,7 +22,7 @@ void vm_init(void) {
     /* DO NOT MODIFY UPPER LINES. */
     /* TODO: Your code goes here. */
 
-    /** PROJ 3 : Memory MGMT*/
+    /** #Project 3: Memory MGMT*/
     list_init(&frame_table.frames);
     lock_init(&frame_table.ft_lock);
     /** end code - Memory MGMT*/
@@ -61,7 +61,7 @@ bool vm_alloc_page_with_initializer(enum vm_type type, void *upage, bool writabl
     struct supplemental_page_table *spt = &thread_current()->spt;
     /* Check wheter the upage is already occupied or not. */
     if (spt_find_page(spt, upage) == NULL) {
-        /** PROJ 3 : Anonymous Page */
+        /** #Project 3: Anonymous Page */
         /* TODO: Create the page, fetch the initializer according to the VM type,
          * TODO: and then create "uninit" page struct by calling uninit_new. You
          * TODO: should modify the field after calling the uninit_new. and add writable field in
@@ -103,7 +103,7 @@ struct page *spt_find_page(struct supplemental_page_table *spt UNUSED, void *va 
     struct page *page = NULL;
     /* TODO: Fill this function. */
 
-    /** PROJ 3 : Memory MGMT */
+    /** #Project 3: Memory MGMT */
     return page_lookup(va);
     /** end code - Memory MGMT*/
 }
@@ -113,7 +113,7 @@ bool spt_insert_page(struct supplemental_page_table *spt UNUSED, struct page *pa
     int succ = false;
     /* TODO: Fill this function. */
 
-    /** PROJ 3 : Memory MGMT */
+    /** #Project 3: Memory MGMT */
     if (!hash_insert(&spt->spt_hash, &page->p_elem))
         succ = true;
     /** end code - Memory MGMT*/
@@ -151,7 +151,7 @@ static struct frame *vm_get_frame(void) {
     struct frame *frame = NULL;
     /* TODO: Fill this function. */
 
-    /** PROJ 3 : Memory MGMT */
+    /** #Project 3: Memory MGMT */
     frame = (struct frame *) calloc(1, sizeof(struct frame));
     frame->kva = palloc_get_page(PAL_USER | PAL_ZERO);
 
@@ -220,7 +220,7 @@ bool vm_claim_page(void *va UNUSED) {
     struct page *page = NULL;
     /* TODO: Fill this function */
 
-    /** PROJ 3 : Memory MGMT */
+    /** #Project 3: Memory MGMT */
     page = spt_find_page(&thread_current()->spt, va);
     if (page == NULL)
         return false;
@@ -242,7 +242,7 @@ static bool vm_do_claim_page(struct page *page) {
 
     /* TODO: Insert page table entry to map page's VA to frame's PA. */
 
-    /** PROJ 3 : Memory MGMT */
+    /** #Project 3: Memory MGMT */
     if (!pml4_get_page(thread_current()->pml4, page->va)) {
         pml4_set_page(thread_current()->pml4, page->va, frame->kva, page->writable);
     }
@@ -252,7 +252,7 @@ static bool vm_do_claim_page(struct page *page) {
 
 /* Initialize new supplemental page table */
 void supplemental_page_table_init(struct supplemental_page_table *spt UNUSED) {
-    /** PROJ 3 : Memory MGMT */
+    /** #Project 3: Memory MGMT */
     hash_init(&spt->spt_hash, page_hash, page_less, NULL);
     /** end code - Memory MGMT */
 }
@@ -260,7 +260,7 @@ void supplemental_page_table_init(struct supplemental_page_table *spt UNUSED) {
 /* Copy supplemental page table from src to dst */
 bool supplemental_page_table_copy(struct supplemental_page_table *child UNUSED,
                                   struct supplemental_page_table *parent UNUSED) {
-    /** PROJ 3 : Anonymous Page */
+    /** #Project 3: Anonymous Page */
     struct hash_iterator p_i;
     struct hash *p_h = &parent->spt_hash;
     hash_first(&p_i, p_h);  // p_i 초기화
@@ -295,7 +295,7 @@ void supplemental_page_table_kill(struct supplemental_page_table *spt UNUSED) {
     hash_clear(&spt->spt_hash, page_killer);
 }
 
-/** PROJ 3 : Memory MGMT */
+/** #Project 3: Memory MGMT */
 struct page *page_lookup(const void *address) {
     struct page p;
     struct hash_elem *e;

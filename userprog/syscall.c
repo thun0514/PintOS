@@ -19,7 +19,7 @@
 #include "threads/palloc.h"
 #include "userprog/process.h"
 /** -----------------------  */
-/** PROJ 3: Memory MGMT */
+/** #Project 3: Memory MGMT */
 #include "include/vm/vm.h"
 /** -----------------------  */
 void syscall_entry(void);
@@ -351,7 +351,7 @@ int dup2(int oldfd, int newfd) {
     return newfd;
 }
 
-/** PROJ 3 : M-mapped filed*/
+/** #Project 3: M-mapped filed*/
 void *mmap(void *addr, size_t length, int writable, int fd, off_t offset) {
     if (fd < 3 || addr == NULL || is_kernel_vaddr(addr))
         return NULL;
