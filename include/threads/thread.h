@@ -104,6 +104,7 @@ typedef struct thread {
 #ifdef VM
     struct supplemental_page_table spt;
     void *usb;  // Userstack Bottom
+    void *usp;  // Userstack Pointer
 #endif
     int64_t wakeup_tick; /* int64_t */
     int recent_cpu;      /* int */
