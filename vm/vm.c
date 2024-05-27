@@ -158,14 +158,16 @@ static struct frame *vm_get_frame(void) {
     /** #Project 3: Memory MGMT */
     frame = (struct frame *) calloc(1, sizeof(struct frame));
     frame->kva = palloc_get_page(PAL_USER | PAL_ZERO);
+    if (!frame->kva) {
+        frame = vm_evict_frame();
+        frame->page = NULL;
+        return frame;
+    }
 
-    if (!frame->kva)
-        PANIC("\nTODOOOOOOOOOOOOOOOO~~~~\n");  // TODO: PANIC~~~~~~~~~~~~~~~~!
-
-    frame->page == NULL;
+    frame->page = NULL;
+    lock_acquire(&frame_table.ft_lock);
     list_push_back(&frame_table.frames, &frame->f_elem);
-
-    /** end code - Memory MGMT */
+    lock_release(&frame_table.ft_lock);
 
     ASSERT(frame != NULL);
     ASSERT(frame->page == NULL);
