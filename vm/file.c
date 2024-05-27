@@ -9,6 +9,8 @@
 #include <string.h>
 #include "userprog/syscall.h"
 
+struct lock file_lock;
+
 static bool file_backed_swap_in(struct page *page, void *kva);
 static bool file_backed_swap_out(struct page *page);
 static void file_backed_destroy(struct page *page);
@@ -23,6 +25,7 @@ static const struct page_operations file_ops = {
 
 /* The initializer of file vm */
 void vm_file_init(void) {
+    lock_init(&file_lock);
 }
 
 /* Initialize the file backed page */
@@ -47,12 +50,15 @@ static bool file_backed_swap_in(struct page *page, void *kva) {
         return false;
 
     /* Load this page. */
+    lock_acquire(&file_lock);
     file_seek(file, offset);
     if (file_read(file, kva, page_read_bytes) != (int) page_read_bytes) {
+        lock_release(&file_lock);
         return false;
     }
     
     memset(kva + page_read_bytes, 0, PGSIZE - page_read_bytes);
+    lock_release(&file_lock);
     return true;
 }
 
@@ -63,12 +69,13 @@ static bool file_backed_swap_out(struct page *page) {
 
     if (!page)
         return false;
+    lock_acquire(&file_lock);
 
     if (pml4_is_dirty(thread_current()->pml4, page->va)) {
         file_write_at(vm_aux->file, page->va, vm_aux->page_read_bytes, vm_aux->ofs);
         pml4_set_dirty(thread_current()->pml4, page->va, 0);
     }
-
+    lock_release(&file_lock);
     page->frame = NULL;
 
     pml4_clear_page(thread_current()->pml4, page->va);
@@ -98,6 +105,7 @@ static void file_backed_destroy(struct page *page) {
 /* Do the mmap */
 void *do_mmap(void *addr, size_t length, int writable, struct file *file, off_t offset) {
     uint8_t *d_addr = addr;
+    lock_acquire(&filesys_lock);
     struct file *re_file = file_reopen(file);
 
     if (!re_file)
@@ -122,6 +130,7 @@ void *do_mmap(void *addr, size_t length, int writable, struct file *file, off_t 
         if (!vm_alloc_page_with_initializer(VM_FILE, d_addr, writable, lazy_load_segment,
                                             (void *) vm_aux)) {
             free(vm_aux);
+            lock_release(&filesys_lock);
             return NULL;
         }
         /* Advance. */
@@ -131,6 +140,7 @@ void *do_mmap(void *addr, size_t length, int writable, struct file *file, off_t 
 
         d_addr += PGSIZE;
     }
+    lock_release(&filesys_lock);
     return addr;
 }
 
@@ -151,9 +161,9 @@ void do_munmap(void *addr) {
         if (!next_file || next_file != orig_file)
             break;
 
-        destroy(page);
+        if (page)
+            destroy(page);
         d_addr += PGSIZE;
     }
-    free(page);
     return addr;
 }
