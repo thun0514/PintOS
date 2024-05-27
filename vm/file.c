@@ -5,6 +5,10 @@
 #include <include/threads/vaddr.h>
 #include <include/threads/mmu.h>
 
+/** #Project 3: Swap In / Out */
+#include <string.h>
+#include "userprog/syscall.h"
+
 static bool file_backed_swap_in(struct page *page, void *kva);
 static bool file_backed_swap_out(struct page *page);
 static void file_backed_destroy(struct page *page);
@@ -24,9 +28,10 @@ void vm_file_init(void) {
 /* Initialize the file backed page */
 bool file_backed_initializer(struct page *page, enum vm_type type, void *kva) {
     /* Set up the handler */
-    page->operations = &file_ops;
-
     struct file_page *file_page = &page->file;
+    struct vm_aux *vm_aux = (struct vm_aux *) page->uninit.aux;
+    file_page->vm_aux = vm_aux;
+    page->operations = &file_ops;
 }
 
 /* Swap in the page by read contents from the file. */
