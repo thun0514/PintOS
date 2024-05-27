@@ -47,6 +47,10 @@ struct page {
     void *va;            /* Address in terms of user space */
     struct frame *frame; /* Back reference for frame */
     /* Your implementation */
+    /** #Project 3: Memory MGMT */
+    struct hash_elem p_elem; /** Hash table element. */
+    bool writable;
+
     // TODO: My implementation
     /* Per-type data are binded into the union.
      * Each function automatically detects the current union */
@@ -58,14 +62,12 @@ struct page {
         struct page_cache page_cache;
 #endif
     };
-    struct hash_elem p_elem; /** Hash table element. */
-    bool writable;
 };
 
 /** #Project 3: Memory Management **/
 struct frame_table {
     struct list frames;
-    struct list_elem next_victim;
+    struct list_elem *next_victim;
     struct lock ft_lock;
 };
 
@@ -122,9 +124,11 @@ bool vm_claim_page(void *va);
 enum vm_type page_get_type(struct page *page);
 
 /** #Project 3: Memory MGMT */
-
 struct page *page_lookup(const void *address);
 void *page_killer(struct hash_elem *hash_elem, void *aux UNUSED);
-/** end code - Memory MGMT */
+
+/** #Project 3: Swap In / Out*/
+static struct frame *vm_get_frame(void);
+static struct frame *vm_evict_frame(void);
 
 #endif /* VM_VM_H */
