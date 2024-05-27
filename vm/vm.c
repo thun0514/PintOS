@@ -208,6 +208,7 @@ static struct frame *vm_get_frame(void) {
 static void vm_stack_growth(void *addr) {
     if (!vm_alloc_page(VM_ANON, addr, true) || !vm_claim_page(addr))
         return;
+    thread_current()->usb -= PGSIZE;
 }
 
 /* Handle the fault on write_protected page */
