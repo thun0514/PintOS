@@ -51,6 +51,7 @@ static bool file_backed_swap_in(struct page *page, void *kva) {
     if (file_read(file, kva, page_read_bytes) != (int) page_read_bytes) {
         return false;
     }
+    
     memset(kva + page_read_bytes, 0, PGSIZE - page_read_bytes);
     return true;
 }
@@ -67,6 +68,7 @@ static bool file_backed_swap_out(struct page *page) {
         file_write_at(vm_aux->file, page->va, vm_aux->page_read_bytes, vm_aux->ofs);
         pml4_set_dirty(thread_current()->pml4, page->va, 0);
     }
+
     page->frame = NULL;
 
     pml4_clear_page(thread_current()->pml4, page->va);
@@ -75,7 +77,8 @@ static bool file_backed_swap_out(struct page *page) {
 
 /* Destory the file backed page. PAGE will be freed by the caller. */
 static void file_backed_destroy(struct page *page) {
-    struct vm_aux *vm_aux = page->uninit.aux;
+    struct file_page *file_page = &page->file;
+    struct vm_aux *vm_aux = file_page->vm_aux;
 
     if (pml4_is_dirty(thread_current()->pml4, page->va)) {
         file_write_at(vm_aux->file, page->va, vm_aux->page_read_bytes, vm_aux->ofs);
@@ -84,6 +87,7 @@ static void file_backed_destroy(struct page *page) {
 
     if (page->frame) {
         list_remove(&page->frame->f_elem);
+        page->frame->page = NULL;
         free(page->frame);
         page->frame = NULL;
     }
@@ -95,10 +99,13 @@ static void file_backed_destroy(struct page *page) {
 void *do_mmap(void *addr, size_t length, int writable, struct file *file, off_t offset) {
     uint8_t *d_addr = addr;
     struct file *re_file = file_reopen(file);
+
     if (!re_file)
         return false;
+
     size_t read_bytes = length < file_length(re_file) ? length : file_length(re_file);
     size_t zero_bytes = PGSIZE - read_bytes % PGSIZE;
+
     while (read_bytes > 0 || zero_bytes > 0) {
         /* Do calculate how to fill this page.
          * We will read PAGE_READ_BYTES bytes from FILE
@@ -133,6 +140,7 @@ void do_munmap(void *addr) {
     struct page *page = spt_find_page(&thread_current()->spt, d_addr);
     struct vm_aux *vm_aux = page->uninit.aux;
     struct file *orig_file = vm_aux->file;
+
     while (1) {
         page = spt_find_page(&thread_current()->spt, d_addr);
         if (!page)
@@ -140,7 +148,7 @@ void do_munmap(void *addr) {
 
         vm_aux = page->uninit.aux;
         struct file *next_file = vm_aux->file;
-        if (!next_file || next_file != orig_file) 
+        if (!next_file || next_file != orig_file)
             break;
 
         destroy(page);
