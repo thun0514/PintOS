@@ -9,6 +9,7 @@
 #include "lib/kernel/bitmap.h"
 
 static struct bitmap *bitmap;
+struct lock anon_lock;
 
 /* DO NOT MODIFY BELOW LINE */
 static struct disk *swap_disk;
@@ -29,6 +30,7 @@ void vm_anon_init(void) {
     /* TODO: Set up the swap_disk. */
     swap_disk = disk_get(1, 1);
     bitmap = bitmap_create(disk_size(swap_disk) / (PGSIZE / DISK_SECTOR_SIZE));  // 7560개
+    lock_init(&anon_lock);
 }
 
 /* Initialize the file mapping */
@@ -36,7 +38,7 @@ bool anon_initializer(struct page *page, enum vm_type type, void *kva) {
     /* Set up the handler */
     page->operations = &anon_ops;
     struct anon_page *anon_page = &page->anon;
-    anon_page->sec_no = -1;
+    anon_page->sec_no = BITMAP_ERROR;
 
     return true;
 }
@@ -45,13 +47,17 @@ bool anon_initializer(struct page *page, enum vm_type type, void *kva) {
 static bool anon_swap_in(struct page *page, void *kva) {
     struct anon_page *anon_page = &page->anon;
     disk_sector_t sec_no = anon_page->sec_no;
+    lock_acquire(&anon_lock);
     if (!bitmap_test(bitmap, sec_no))
         return NULL;
+    lock_release(&anon_lock);
 
     for (int i = 0; i < 8; i++)
         disk_read(swap_disk, sec_no * 8 + i, kva + DISK_SECTOR_SIZE * i);
 
+    lock_acquire(&anon_lock);
     bitmap_reset(bitmap, sec_no);
+    lock_release(&anon_lock);
 
     return true;
 }
@@ -60,7 +66,9 @@ static bool anon_swap_in(struct page *page, void *kva) {
 static bool anon_swap_out(struct page *page) {
     struct anon_page *anon_page = &page->anon;
     // return true;
+    lock_acquire(&anon_lock);
     size_t sec_num = bitmap_scan_and_flip(bitmap, 0, 1, 0);
+    lock_release(&anon_lock);
     if (sec_num == BITMAP_ERROR)
         return false;
     disk_sector_t sec_no = sec_num;
@@ -82,7 +90,9 @@ static void anon_destroy(struct page *page) {
         bitmap_reset(bitmap, anon_page->sec_no);
 
     if (page->frame) {
+        lock_acquire(&anon_lock);
         list_remove(&page->frame->f_elem);
+        lock_release(&anon_lock);
         page->frame->page = NULL;
         palloc_free_page(page->frame->kva);
         free(page->frame);
