@@ -29,15 +29,13 @@ int write(int fd, const void *buffer, unsigned length);
 void seek(int fd, unsigned position);
 int tell(int fd);
 void close(int fd);
-/** ------------------------ */
 
 /** #Project 2: Extend File Descriptor (Extra) */
 int dup2(int oldfd, int newfd);
 
 /** #Project 3: M-mapped filed*/
 void *mmap(void *addr, size_t length, int writable, int fd, off_t offset);
-void munmap(void *addr );
+void munmap(void *addr);
 extern struct lock filesys_lock;
-/** end code - M-mapped filed */
 
 #endif /* userprog/syscall.h */

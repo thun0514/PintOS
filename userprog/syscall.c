@@ -120,7 +120,7 @@ void syscall_handler(struct intr_frame *f UNUSED) {
     }
 }
 
-struct page *check_address(void *addr) {
+void check_address(void *addr) {
     thread_t *curr = thread_current();
     if (is_kernel_vaddr(addr) || addr == NULL || !spt_find_page(&curr->spt, addr))
         exit(-1);
