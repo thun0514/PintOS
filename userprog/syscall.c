@@ -18,10 +18,10 @@
 #include "threads/mmu.h"
 #include "threads/palloc.h"
 #include "userprog/process.h"
-/** -----------------------  */
+
 /** #Project 3: Memory MGMT */
 #include "include/vm/vm.h"
-/** -----------------------  */
+
 void syscall_entry(void);
 void syscall_handler(struct intr_frame *);
 
@@ -120,10 +120,12 @@ void syscall_handler(struct intr_frame *f UNUSED) {
     }
 }
 
-void check_address(void *addr) {
-    if (is_kernel_vaddr(addr) || addr == NULL
-        || spt_find_page(&thread_current()->spt, addr) == NULL)
+struct page *check_address(void *addr) {
+    thread_t *curr = thread_current();
+    if (is_kernel_vaddr(addr) || addr == NULL || !spt_find_page(&curr->spt, addr))
         exit(-1);
+
+    return;
 }
 
 void halt(void) {
@@ -192,9 +194,9 @@ int open(const char *file) {
 
     lock_acquire(&filesys_lock);
     struct file *newfile = filesys_open(file);
+    lock_release(&filesys_lock);
 
     if (newfile == NULL) {
-        lock_release(&filesys_lock);
         return -1;
     }
 
@@ -203,7 +205,6 @@ int open(const char *file) {
     if (fd == -1)
         file_close(newfile);
 
-    lock_release(&filesys_lock);
     return fd;
 }
 
@@ -257,11 +258,11 @@ int read(int fd, void *buffer, unsigned length) {
 
 int write(int fd, const void *buffer, unsigned length) {
     check_address(buffer);
-    lock_acquire(&filesys_lock);
 
     thread_t *curr = thread_current();
     off_t bytes = -1;
 
+    lock_acquire(&filesys_lock);
     struct file *file = process_get_file(fd);
 
     if (file == STDIN || file == NULL)  // stdin에 쓰려고 할 경우
@@ -364,7 +365,7 @@ void *mmap(void *addr, size_t length, int writable, int fd, off_t offset) {
 
     struct file *file = process_get_file(fd);
 
-    if (filesize(file) == 0)
+    if (filesize(file) == 0 || !file)
         return NULL;
 
     return do_mmap(addr, length, writable, file, offset);
