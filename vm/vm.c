@@ -100,12 +100,16 @@ err:
 
 /* Find VA from spt and return page. On error, return NULL. */
 struct page *spt_find_page(struct supplemental_page_table *spt UNUSED, void *va UNUSED) {
-    struct page *page = NULL;
     /* TODO: Fill this function. */
 
     /** #Project 3: Memory MGMT */
-    return page_lookup(va);
-    /** end code - Memory MGMT*/
+    struct page *page = (struct page *) malloc(sizeof(struct page));
+    page->va = pg_round_down(va);
+    struct hash_elem *e = hash_find(&spt->spt_hash, &page->p_elem);
+
+    free(page);
+
+    return e != NULL ? hash_entry(e, struct page, p_elem) : NULL;
 }
 
 /* Insert PAGE into spt with validation. */
@@ -296,14 +300,6 @@ void supplemental_page_table_kill(struct supplemental_page_table *spt UNUSED) {
 }
 
 /** #Project 3: Memory MGMT */
-struct page *page_lookup(const void *address) {
-    struct page p;
-    struct hash_elem *e;
-    p.va = pg_round_down(address);
-    e = hash_find(&thread_current()->spt.spt_hash, &p.p_elem);
-    return e != NULL ? hash_entry(e, struct page, p_elem) : NULL;
-}
-
 void *page_killer(struct hash_elem *hash_elem, void *aux UNUSED) {
     struct page *page = hash_entry(hash_elem, struct page, p_elem);
     vm_dealloc_page(page);
