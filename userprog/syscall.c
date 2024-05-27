@@ -382,5 +382,3 @@ void munmap(void *addr) {
 
     return do_munmap(addr);
 }
-
-/** end code - M-mapped filed */

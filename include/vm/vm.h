@@ -64,7 +64,7 @@ struct page {
     };
 };
 
-/** #Project 3: Memory Management **/
+/** #Project 3: Memory MGMT */
 struct frame_table {
     struct list frames;
     struct list_elem *next_victim;
@@ -77,7 +77,6 @@ struct frame {
     struct page *page;
     struct list_elem f_elem;
 };
-/** end code - Memory MGMT */
 
 /* The function table for page operations.
  * This is one way of implementing "interface" in C.
@@ -127,7 +126,7 @@ enum vm_type page_get_type(struct page *page);
 struct page *page_lookup(const void *address);
 void *page_killer(struct hash_elem *hash_elem, void *aux UNUSED);
 
-/** #Project 3: Swap In / Out*/
+/** #Project 3: Swap In / Out */
 static struct frame *vm_get_frame(void);
 static struct frame *vm_evict_frame(void);
 

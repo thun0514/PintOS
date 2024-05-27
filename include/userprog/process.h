@@ -32,5 +32,4 @@ struct vm_aux {
     struct file *file;
 };
 
-/** end code - Memory MGMT */
 #endif /* userprog/process.h */

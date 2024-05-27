@@ -59,7 +59,6 @@ tid_t process_create_initd(const char *file_name) {
      */
     char *ptr;
     strtok_r(file_name, " ", &ptr);
-    /** --------------------------------------------------------------------------------------------- */
 
     /* FILE_NAME을 실행할 새 스레드를 만듭니다. */
     tid = thread_create(file_name, PRI_DEFAULT, initd, fn_copy);
@@ -203,7 +202,6 @@ static void __do_fork(void *aux) {
         else
             current->fdt[fd] = file;
     }
-    /** -------------------------------------------- */
 
     sema_up(
         &current->fork_sema);  // fork 프로세스가 정상적으로 완료됐으므로 현재 fork용 sema unblock
@@ -571,17 +569,6 @@ static bool install_page(void *upage, void *kpage, bool writable);
  * Return true if successful, false if a memory allocation error
  * or disk read error occurs. */
 
-/* UPAGE 주소의 FILE에 있는 오프셋 OFS에서 시작하는 세그먼트를 로드합니다.
- * 전체적으로 READ_BYTES + ZERO_BYTES 바이트의 가상 메모리가 다음과 같이 초기화됩니다.
- *
- * - UPAGE의 READ_BYTES 바이트는 오프셋 OFS에서 시작하는 FILE에서 읽어야 합니다.
- *
- * - UPAGE + READ_BYTES에서 ZERO_BYTES바이트를 0으로 설정해야 합니다.
- *
- * 이 함수에 의해 초기화된 페이지는 WRITABLE이 true인 경우 사용자 프로세스에서 쓸 수 있어야 하고,
- * 그렇지 않으면 읽기 전용이어야 합니다.
- *
- * 성공하면 true를 반환하고, 메모리 할당 오류나 디스크 읽기 오류가 발생하면 false를 반환합니다. */
 static bool load_segment(struct file *file, off_t ofs, uint8_t *upage, uint32_t read_bytes,
                          uint32_t zero_bytes, bool writable) {
     ASSERT((read_bytes + zero_bytes) % PGSIZE == 0);
@@ -668,10 +655,6 @@ bool lazy_load_segment(struct page *page, void *aux) {
     /* TODO: This called when the first page fault occurs on address VA. */
     /* TODO: VA is available when calling this function. */
 
-    /* TODO: 파일에서 세그먼트 로드 */
-    /* TODO: 주소 VA에서 첫 번째 페이지 오류가 발생할 때 호출됩니다. */
-    /* TODO: 이 함수를 호출하면 VA를 사용할 수 있습니다. */
-
     /* Get a page of memory. */
     struct vm_aux *vm_aux = (struct vm_aux *) aux;
     struct file *file = vm_aux->file;
@@ -706,25 +689,6 @@ bool lazy_load_segment(struct page *page, void *aux) {
  *
  * Return true if successful, false if a memory allocation error
  * or disk read error occurs. */
-
-/* UPAGE 주소의 FILE에 있는 오프셋 OFS에서 시작하는 세그먼트를 로드합니다.
- * 전체적으로 READ_BYTES + ZERO_BYTES 바이트의 가상 메모리가 다음과 같이 초기화됩니다.
- *
- * - UPAGE의 READ_BYTES 바이트는 오프셋 OFS에서 시작하는 FILE에서 읽어야 합니다.
- *
- * - UPAGE + READ_BYTES에서 ZERO_BYTES바이트를 0으로 설정해야 합니다.
- *
- * 이 함수에 의해 초기화된 페이지는 WRITABLE이 true인 경우 사용자 프로세스에서 쓸 수 있어야 하고,
- * 그렇지 않으면 읽기 전용이어야 합니다.
- *
- * 성공하면 true를 반환하고, 메모리 할당 오류나 디스크 읽기 오류가 발생하면 false를 반환합니다. */
-
-/**이 함수는 실행 파일의 내용을 페이지로 로딩하는 함수이며 첫번째 page fault가 발생될 때 호출된다.
- * 이 함수가 호출되기 이전의 매핑은 물리 프레임 매핑이므로, 물리 프레임에 내용을 로딩하는 작업만
- * 진행하면 된다. 함수는 페이지 구조체와 aux를 인자로 받는데, aux의 경우는 load_segment에서 로딩을
- * 위해 설정한 정보인 lazy_load_arg이며, 이 정보를 사용하여 읽어올 파일을 찾아서 메모리에 로딩을
- * 하는 형식으로 진행되어야한다.
- */
 static bool load_segment(struct file *file, off_t ofs, uint8_t *upage, uint32_t read_bytes,
                          uint32_t zero_bytes, bool writable) {
     ASSERT((read_bytes + zero_bytes) % PGSIZE == 0);
@@ -762,9 +726,6 @@ static bool setup_stack(struct intr_frame *if_) {
     bool success = false;
     void *stack_bottom = (void *) (((uint8_t *) USER_STACK) - PGSIZE);
     thread_current()->usb = stack_bottom;
-    /** Project 3 첫스택 지연할당 못함, stack 마킹 못함
-     * 스택 확인 못하면 첫스택인지 아닌지 몰라요~
-     * 스택확인은 thread 구조체에 stack_bottom 멤버 추가해서 할수있음 */
     /* TODO: Map the stack on stack_bottom and claim the page immediately.
      * TODO: If success, set the rsp accordingly.
      * TODO: You should mark the page is stack. */

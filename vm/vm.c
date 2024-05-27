@@ -22,10 +22,9 @@ void vm_init(void) {
     /* DO NOT MODIFY UPPER LINES. */
     /* TODO: Your code goes here. */
 
-    /** #Project 3: Memory MGMT*/
+    /** #Project 3: Memory MGMT */
     list_init(&frame_table.frames);
     lock_init(&frame_table.ft_lock);
-    /** end code - Memory MGMT*/
 }
 
 /* Get the type of the page. This function is useful if you want to know the
@@ -49,11 +48,6 @@ static struct frame *vm_evict_frame(void);
 /* Create the pending page object with initializer. If you want to create a
  * page, do not create it directly and make it through this function or
  * `vm_alloc_page`. */
-/*
-🐯 위의 함수는 초기화되지 않은 주어진 type의 페이지를 생성합니다. 초기화되지 않은 페이지의 swap_in
-핸들러는 자동적으로 페이지 타입에 맞게 페이지를 초기화하고 주어진 AUX를 인자로 삼는 INIT 함수를
-호출합니다. 당신이 페이지 구조체를 가지게 되면 프로세스의 보조 페이지 테이블에 그 페이지를
-삽입하십시오. vm.h에 정의되어 있는 VM_TYPE 매크로를 사용하면 편리할 것입니다. */
 bool vm_alloc_page_with_initializer(enum vm_type type, void *upage, bool writable,
                                     vm_initializer *init, void *aux) {
     ASSERT(VM_TYPE(type) != VM_UNINIT)
@@ -92,7 +86,6 @@ bool vm_alloc_page_with_initializer(enum vm_type type, void *upage, bool writabl
             goto err;
         }
         return true;
-        /** end code - Anonymous Page */
     }
 err:
     return false;
@@ -120,7 +113,6 @@ bool spt_insert_page(struct supplemental_page_table *spt UNUSED, struct page *pa
     /** #Project 3: Memory MGMT */
     if (!hash_insert(&spt->spt_hash, &page->p_elem))
         succ = true;
-    /** end code - Memory MGMT*/
 
     return succ;
 }
@@ -261,15 +253,11 @@ bool vm_claim_page(void *va UNUSED) {
     page = spt_find_page(&thread_current()->spt, va);
     if (page == NULL)
         return false;
-    /** end code - Memory MGMT */
 
     return vm_do_claim_page(page);
 }
 
 /* Claim the PAGE and set up the mmu. */
-/* 당신은 MMU를 세팅해야 하는데, 이는 가상 주소와 물리 주소를 매핑한 정보를 페이지 테이블에
- * 추가해야 한다는 것을 의미합니다. 위의 함수는 앞에서 말한 연산이 성공적으로 수행되었을 경우에
- * true를 반환하고 그렇지 않을 경우에 false를 반환합니다.*/
 static bool vm_do_claim_page(struct page *page) {
     struct frame *frame = vm_get_frame();
 
@@ -283,7 +271,7 @@ static bool vm_do_claim_page(struct page *page) {
     if (!pml4_get_page(thread_current()->pml4, page->va)) {
         pml4_set_page(thread_current()->pml4, page->va, frame->kva, page->writable);
     }
-    /** end code - Memory MGMT */
+
     return swap_in(page, frame->kva);
 }
 
@@ -291,7 +279,6 @@ static bool vm_do_claim_page(struct page *page) {
 void supplemental_page_table_init(struct supplemental_page_table *spt UNUSED) {
     /** #Project 3: Memory MGMT */
     hash_init(&spt->spt_hash, page_hash, page_less, NULL);
-    /** end code - Memory MGMT */
 }
 
 /* Copy supplemental page table from src to dst */
@@ -321,7 +308,6 @@ bool supplemental_page_table_copy(struct supplemental_page_table *child UNUSED,
         }
     }
     return true;
-    /** end code - Anonymous Page */
 }
 
 /* Free the resource hold by the supplemental page table */
@@ -337,4 +323,3 @@ void *page_killer(struct hash_elem *hash_elem, void *aux UNUSED) {
     struct page *page = hash_entry(hash_elem, struct page, p_elem);
     vm_dealloc_page(page);
 }
-/** end code - Memory MGMT */

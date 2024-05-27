@@ -380,4 +380,3 @@ bool page_less(const struct hash_elem *a_, const struct hash_elem *b_, void *aux
 
     return a->va < b->va;
 }
-/** end code - Memory MGMT */

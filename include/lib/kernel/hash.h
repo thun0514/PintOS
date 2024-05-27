@@ -98,6 +98,5 @@ uint64_t hash_int(int);
 /** #Project 3: Memory MGMT */
 unsigned page_hash(const struct hash_elem *p_, void *aux UNUSED);
 bool page_less(const struct hash_elem *a_, const struct hash_elem *b_, void *aux UNUSED);
-/** end code - Memory MGMT */
 
 #endif /* lib/kernel/hash.h */

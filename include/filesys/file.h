@@ -14,7 +14,6 @@ struct file {
 
     /** #Project 2: Extend File Descriptor */
     int dup_count;
-    /** ---------------------------------- */
 };
 
 /* Opening and closing files. */

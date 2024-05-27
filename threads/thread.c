@@ -214,7 +214,6 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
     t->fdt[0] = STDIN;   // stdin 예약된 자리 (dummy)
     t->fdt[1] = STDOUT;  // stdout 예약된 자리 (dummy)
     t->fdt[2] = STDERR;  // stderr 예약된 자리 (dummy)
-    /** ---------------------------------------- */
 
     /** #Project 2: System Call - 현재 스레드의 자식 리스트에 추가 */
     list_push_back(&thread_current()->child_list, &t->child_elem);
@@ -348,7 +347,6 @@ void thread_set_priority(int new_priority) {
     thread_current()->original_priority = new_priority;  // prioirity 대신 original priority 사용
 
     refresh_priority();  // donation 관련 정보 갱신 및 스케줄링
-    /** ----------------------------- */
 
     /** #Project 1: Priority Scheduling 우선순위를 비교하여 스케쥴링 하는 함수 호출 */
     test_max_priority();
@@ -487,7 +485,6 @@ static void init_thread(struct thread *t, const char *name, int priority) {
     sema_init(&t->fork_sema, 0);
     sema_init(&t->exit_sema, 0);
     sema_init(&t->wait_sema, 0);
-    /** -----------------------  */
 #endif
 }
 
@@ -733,7 +730,8 @@ void test_max_priority(void) {
     thread_t *th = list_entry(list_front(&ready_list), thread_t, elem);
 
     if (thread_current()->priority < th->priority) {
-#ifdef USERPROG /** Project 2: 외부 인터럽트에 의한 thread yield 방지 */
+#ifdef USERPROG 
+/** #Project 2: 외부 인터럽트에 의한 thread yield 방지 */
         if (intr_context())
             intr_yield_on_return();
         else

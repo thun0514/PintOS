@@ -3,7 +3,7 @@
 #include "vm/vm.h"
 #include "devices/disk.h"
 
-/** Project 3: Swap In / Out */
+/** #Project 3: Swap In / Out */
 #include "threads/mmu.h"
 #include "threads/vaddr.h"
 #include "lib/kernel/bitmap.h"
@@ -65,7 +65,7 @@ static bool anon_swap_in(struct page *page, void *kva) {
 /* Swap out the page by writing contents to the swap disk. */
 static bool anon_swap_out(struct page *page) {
     struct anon_page *anon_page = &page->anon;
-    // return true;
+    
     lock_acquire(&anon_lock);
     size_t sec_num = bitmap_scan_and_flip(bitmap, 0, 1, 0);
     lock_release(&anon_lock);
